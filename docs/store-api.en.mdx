@@ -114,7 +114,10 @@ A logged-in customer may send `{ "order_id": "order_..." }` alone. Returns the
 order (`id`, `display_id`, `placed_at`, `canceled`) and `assessment`: per item
 `eligible`, `excluded_reason`, `basis` (`delivery`, `contract_conclusion`,
 `awaiting_delivery`), `deadline_at`, `within_period`, plus the order-level
-`deadline_at`. Mismatch and unknown order both give 404.
+`deadline_at`, `right_of_withdrawal` (`applies`, `excluded_digital_consent`,
+`none_eligible`), `legal_basis` (Polish and English text, set for
+`excluded_digital_consent`), `digital_consent_at` and `digital_consent_missing`
+(see the digital-only section of [Withdrawal](./withdrawal.en.mdx)). Mismatch and unknown order both give 404.
 
 `POST /store/consumer-compliance/withdrawals`
 

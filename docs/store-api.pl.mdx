@@ -117,7 +117,11 @@ Zalogowany klient może wysłać samo `{ "order_id": "order_..." }`. Zwraca
 zamówienie (`id`, `display_id`, `placed_at`, `canceled`) i `assessment`: dla
 każdej pozycji `eligible`, `excluded_reason`, `basis` (`delivery`,
 `contract_conclusion`, `awaiting_delivery`), `deadline_at`, `within_period`, a
-także `deadline_at` całego zamówienia. Niezgodność danych i nieznane zamówienie
+także `deadline_at` całego zamówienia, `right_of_withdrawal` (`applies`,
+`excluded_digital_consent`, `none_eligible`), `legal_basis` (treść po polsku i
+angielsku, przy `excluded_digital_consent`), `digital_consent_at` i
+`digital_consent_missing` (zob. sekcję o treściach cyfrowych w
+[Odstąpieniu](./withdrawal.pl.mdx)). Niezgodność danych i nieznane zamówienie
 dają 404.
 
 `POST /store/consumer-compliance/withdrawals`

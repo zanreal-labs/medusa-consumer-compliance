@@ -278,7 +278,9 @@
       "updateError": "Nie udało się zaktualizować odstąpienia",
       "orderHeading": "Odstąpienia",
       "wholeOrder": "Całe zamówienie",
-      "open": "Otwórz w rejestrze"
+      "open": "Otwórz w rejestrze",
+      "digitalConsentMissing": "Brak zgody na natychmiastowe dostarczenie",
+      "digitalConsentMissingHint": "Sklep sprzedaje tylko treści cyfrowe, ale zamówienie nie ma zapisanej zgody na natychmiastowe dostarczenie treści cyfrowych. Wyjątek z art. 38 ust. 1 pkt 13 nie ma zastosowania, więc obowiązuje zwykłe 14-dniowe prawo odstąpienia."
     },
     "withdrawalStatuses": {
       "pending_confirmation": "Czeka na potwierdzenie",

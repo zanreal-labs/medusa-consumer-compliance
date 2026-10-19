@@ -117,3 +117,75 @@ describe("tokens and e-mails", () => {
     expect(sameEmail(null, "jan@example.com")).toBe(false);
   });
 });
+
+describe("assessWithdrawal: digital-only store (ESD codes)", () => {
+  const goods = item({ exception: "none", requires_shipping: true });
+
+  it("has no right of withdrawal when consent to immediate supply is recorded, with the legal basis", () => {
+    const result = assessWithdrawal({
+      ...base,
+      digitalOnly: true,
+      facts: facts({ deliveries: [], digital_consent_at: new Date("2026-10-01T09:59:00Z") }),
+      items: [goods, item({ line_item_id: "item_2" })],
+      now: new Date("2026-10-02T10:00:00Z"),
+    });
+    expect(result.right_of_withdrawal).toBe("excluded_digital_consent");
+    expect(result.any_eligible).toBe(false);
+    expect(result.digital_consent_missing).toBe(false);
+    expect(result.digital_consent_at).toBe("2026-10-01T09:59:00.000Z");
+    expect(result.legal_basis?.pl).toContain("Art. 38 ust. 1 pkt 13 ustawy o prawach konsumenta");
+    expect(result.legal_basis?.en).toContain("Art. 38 ust. 1 pkt 13");
+    for (const assessed of result.items) {
+      expect(assessed).toMatchObject({ eligible: false, exception: "digital_content", excluded_reason: "digital_content" });
+    }
+  });
+
+  it("keeps the ordinary 14-day right from the contract and flags missing consent", () => {
+    const result = assessWithdrawal({
+      ...base,
+      digitalOnly: true,
+      facts: facts({ deliveries: [], digital_consent_at: null }),
+      items: [goods],
+      now: new Date("2026-10-02T10:00:00Z"),
+    });
+    expect(result.right_of_withdrawal).toBe("applies");
+    expect(result.digital_consent_missing).toBe(true);
+    expect(result.legal_basis).toBeNull();
+    // Contract concluded 1 Oct: day 14 is Thursday 15 Oct.
+    expect(result.items[0]).toMatchObject({
+      basis: "contract_conclusion",
+      deadline_at: "2026-10-15T21:59:59.999Z",
+      eligible: true,
+      within_period: true,
+    });
+  });
+
+  it("overrides per-product classification and ignores deliveries", () => {
+    const result = assessWithdrawal({
+      ...base,
+      digitalOnly: true,
+      facts: facts({ deliveries: [null] }),
+      items: [item({ exception: "custom_made" })],
+      now: new Date("2026-10-02T10:00:00Z"),
+    });
+    expect(result.items[0]).toMatchObject({ basis: "contract_conclusion", eligible: true, exception: "digital_content" });
+  });
+
+  it("does not flag missing consent outside digital-only mode", () => {
+    const result = assessWithdrawal({ ...base, facts: facts(), items: [goods], now: new Date("2026-10-06T10:00:00Z") });
+    expect(result.digital_consent_missing).toBe(false);
+    expect(result.right_of_withdrawal).toBe("applies");
+  });
+
+  it("reports a canceled order as none eligible, not as the digital exception", () => {
+    const result = assessWithdrawal({
+      ...base,
+      digitalOnly: true,
+      facts: facts({ canceled: true, digital_consent_at: new Date("2026-10-01T09:59:00Z") }),
+      items: [goods],
+      now: new Date("2026-10-02T10:00:00Z"),
+    });
+    expect(result.right_of_withdrawal).toBe("none_eligible");
+    expect(result.legal_basis).toBeNull();
+  });
+});

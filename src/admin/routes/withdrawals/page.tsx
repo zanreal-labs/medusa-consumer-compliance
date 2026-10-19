@@ -1,6 +1,6 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk";
 import { ArrowUturnLeft } from "@medusajs/icons";
-import { Button, Container, Drawer, Heading, Table, Text, Textarea, toast } from "@medusajs/ui";
+import { Badge, Button, Container, Drawer, Heading, Table, Text, Textarea, toast } from "@medusajs/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
@@ -144,7 +144,16 @@ const WithdrawalsPage = () => {
               <Table.Row className="cursor-pointer" key={row.id} onClick={() => open(row)}>
                 <Table.Cell>{formatDateTime(row.submitted_at, i18n.language)}</Table.Cell>
                 <Table.Cell>#{row.order_display_id}</Table.Cell>
-                <Table.Cell>{row.customer_name}</Table.Cell>
+                <Table.Cell>
+                  <div className="flex flex-col gap-y-1">
+                    <span>{row.customer_name}</span>
+                    {row.assessment?.digital_consent_missing ? (
+                      <Badge color="orange" size="2xsmall">
+                        {t("consumerCompliance.withdrawals.digitalConsentMissing")}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </Table.Cell>
                 <Table.Cell>{row.within_period ? t("consumerCompliance.withdrawals.inPeriod") : t("consumerCompliance.withdrawals.outsidePeriod")}</Table.Cell>
                 <Table.Cell>
                   {row.acknowledgement_sent_at
@@ -229,6 +238,11 @@ const WithdrawalsPage = () => {
                   </Text>
                 ) : null}
               </div>
+              {selected.assessment?.digital_consent_missing ? (
+                <Text size="small" className="text-ui-fg-error">
+                  {t("consumerCompliance.withdrawals.digitalConsentMissingHint")}
+                </Text>
+              ) : null}
               {selected.acknowledgement_error ? (
                 <Text size="small" className="text-ui-fg-error">
                   {t("consumerCompliance.withdrawals.ackFailed")}: {selected.acknowledgement_error}

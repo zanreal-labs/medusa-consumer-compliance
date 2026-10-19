@@ -59,7 +59,34 @@ export interface ItemAssessment {
   within_period: boolean;
 }
 
+/** Statutory basis of the digital content exception, returned with a "no right of withdrawal" answer. */
+export const DIGITAL_CONTENT_LEGAL_BASIS = {
+  en: "Art. 38 ust. 1 pkt 13 of the Polish Consumer Rights Act (ustawa o prawach konsumenta): no right of withdrawal from a contract for digital content not supplied on a tangible medium, where performance began with the consumer's express prior consent, after being informed of the loss of the right of withdrawal, and the trader provided the confirmation required by art. 15 ust. 1 and 2 or art. 21 ust. 1.",
+  pl: "Art. 38 ust. 1 pkt 13 ustawy o prawach konsumenta: prawo odstąpienia od umowy nie przysługuje w odniesieniu do umowy o dostarczanie treści cyfrowych niedostarczanych na nośniku materialnym, jeżeli spełnianie świadczenia rozpoczęło się za wyraźną i uprzednią zgodą konsumenta, który został poinformowany przed jego rozpoczęciem, że po spełnieniu świadczenia utraci prawo odstąpienia od umowy, i przyjął to do wiadomości, a przedsiębiorca przekazał konsumentowi potwierdzenie, o którym mowa w art. 15 ust. 1 i 2 albo art. 21 ust. 1.",
+} as const;
+
+/**
+ * The order-level answer a storefront shows before the item list.
+ *
+ * - `applies`: at least one item can be withdrawn from.
+ * - `excluded_digital_consent`: a digital-only store and the consumer
+ *   consented to immediate supply; nothing can be withdrawn (art. 38 ust. 1
+ *   pkt 13), and `legal_basis` says why.
+ * - `none_eligible`: nothing can be withdrawn for another reason (canceled
+ *   order, every item covered by another exception).
+ */
+export type RightOfWithdrawal = "applies" | "excluded_digital_consent" | "none_eligible";
+
 export interface OrderAssessment {
+  right_of_withdrawal: RightOfWithdrawal;
+  legal_basis: { pl: string; en: string } | null;
+  /**
+   * Digital-only store, but the order carries no consent timestamp: the
+   * exception cannot apply, the ordinary 14-day right stands, and the admin
+   * register flags the withdrawal ("brak zgody na natychmiastowe dostarczenie").
+   */
+  digital_consent_missing: boolean;
+  digital_consent_at: string | null;
   items: ItemAssessment[];
   /** Latest deadline across eligible items, ISO, or null if any eligible item awaits delivery. */
   deadline_at: string | null;
@@ -95,15 +122,27 @@ export function assessWithdrawal(input: {
   now: Date;
   periodDays: number;
   extendOverNonWorkingDays: boolean;
+  /**
+   * The store sells only digital content (for example licence keys): every
+   * line is treated as digital content not supplied on a tangible medium,
+   * whatever the product classification says. The period runs from the
+   * contract, and the art. 38 ust. 1 pkt 13 exception applies exactly when
+   * the order records the consumer's consent.
+   */
+  digitalOnly?: boolean;
 }): OrderAssessment {
   const { facts, now, periodDays, extendOverNonWorkingDays } = input;
+  const digitalOnly = input.digitalOnly === true;
+  const sourceItems = digitalOnly
+    ? input.items.map((item) => ({ ...item, exception: "digital_content" as const, requires_shipping: false }))
+    : input.items;
   const goodsDeliveries = facts.deliveries;
   const allDelivered = goodsDeliveries.length > 0 && goodsDeliveries.every((date) => date !== null);
   const lastDelivery = allDelivered
     ? new Date(Math.max(...goodsDeliveries.map((date) => (date as Date).getTime())))
     : null;
 
-  const items = input.items.map((item): ItemAssessment => {
+  const items = sourceItems.map((item): ItemAssessment => {
     let basis: PeriodBasis;
     let start: Date | null;
     if (!item.requires_shipping) {
@@ -134,7 +173,17 @@ export function assessWithdrawal(input: {
   const eligible = items.filter((item) => item.eligible);
   const awaiting = eligible.some((item) => item.deadline_at === null);
   const deadlines = eligible.map((item) => item.deadline_at).filter((value): value is string => value !== null);
+  const consentExclusion =
+    eligible.length === 0 &&
+    !facts.canceled &&
+    items.length > 0 &&
+    items.every((item) => item.excluded_reason === "digital_content");
+  const right: RightOfWithdrawal = eligible.length > 0 ? "applies" : consentExclusion ? "excluded_digital_consent" : "none_eligible";
   return {
+    digital_consent_at: facts.digital_consent_at?.toISOString() ?? null,
+    digital_consent_missing: digitalOnly && facts.digital_consent_at === null,
+    legal_basis: right === "excluded_digital_consent" ? { ...DIGITAL_CONTENT_LEGAL_BASIS } : null,
+    right_of_withdrawal: right,
     any_eligible: eligible.length > 0,
     any_within_period: eligible.some((item) => item.within_period),
     deadline_at: awaiting || deadlines.length === 0 ? null : deadlines.sort().at(-1) ?? null,

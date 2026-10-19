@@ -25,3 +25,15 @@ reaches npm only through a GitHub Release.
   register.
 - Reviews and personalised pricing disclosures.
 - Admin UI in Polish and English.
+- `withdrawal.digitalOnly` for stores that sell only digital content (ESD keys):
+  every line is digital content; with `digital_content_consent_at` on the order
+  the lookup answers "no right of withdrawal" with the art. 38 ust. 1 pkt 13
+  legal basis, without it the 14-day right applies and the admin register flags
+  the missing consent.
+- Lookup assessment gains `right_of_withdrawal`, `legal_basis`,
+  `digital_consent_at` and `digital_consent_missing`.
+
+### Documentation
+
+- Recorded the decisions: draft UC169 labels as defaults (re-check on
+  publication), order number plus e-mail as guest identification.

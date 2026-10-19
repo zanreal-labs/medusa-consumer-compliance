@@ -38,7 +38,10 @@ stored as `submitted_at`; sending the statement before the period ends is enough
 `consumer_compliance.withdrawal.confirmed` and sends the acknowledgement.
 
 A guest identifies the order by its number and the order e-mail; a logged-in
-customer can use any of their orders. A wrong e-mail and an unknown order give the
+customer can use any of their orders. **This is the identification method chosen
+for our store (decision of 19 October 2026):** order number plus e-mail is
+treated as sufficient and not burdensome, so no magic link or extra step is
+required. A wrong e-mail and an unknown order give the
 same 404, so the lookup cannot probe order numbers. Put the routes behind your rate
 limiter.
 
@@ -49,7 +52,9 @@ limiter.
 | Entry point (on the element that opens the function) | Odstąp od umowy tutaj | Withdraw from contract here |
 | Confirmation button | Potwierdź odstąpienie od umowy | Confirm withdrawal |
 
-Both come from the Polish text of the directive and the draft act, and are
+These are the defaults and the store has decided to use them as they are. They
+come from the Polish text of the directive and draft UC169 (art. 30a ust. 3 and
+6), so **re-check them when the act is published** in Dziennik Ustaw. They are
 returned by `GET /store/consumer-compliance/disclosures` as `withdrawal.labels`.
 The draft's explanatory memorandum adds: the label sits on the button itself, the
 consumer can pick items, pre-filled data must be editable, and the consumer must
@@ -89,6 +94,33 @@ outright. Two need facts the shop cannot see:
   supply and acknowledged losing the right. Store that moment as an ISO date in
   the order metadata key `digital_content_consent_at` (configurable) when the
   checkout collects the consent.
+
+## Digital-only stores (ESD licence keys)
+
+A store that sells only digital content not supplied on a tangible medium, such
+as licence keys delivered by e-mail, sets `withdrawal.digitalOnly: true` (in our
+backend: `CONSUMER_COMPLIANCE_DIGITAL_ONLY=true`). Every order line is then
+treated as digital content, whatever the product classification says, and the
+period runs from the conclusion of the contract.
+
+Under art. 38 ust. 1 pkt 13 the right of withdrawal is lifted **only** if supply
+started with the consumer's express prior consent, after they were told they
+would lose the right and acknowledged it, and the trader confirmed this (art. 15
+or 21). So the answer depends on the order:
+
+| Order metadata `digital_content_consent_at` | Lookup answer | Admin register |
+| --- | --- | --- |
+| Present (ISO timestamp) | `right_of_withdrawal: "excluded_digital_consent"` with `legal_basis` (Polish and English text of the provision); step one is refused with the same reason | Nothing to register |
+| Missing | `right_of_withdrawal: "applies"`, `digital_consent_missing: true`; the ordinary 14-day right from the order date | Flagged "Brak zgody na natychmiastowe dostarczenie" |
+
+**The consent has to be captured by whatever checkout sells the codes**: a
+checkbox that is not pre-ticked, with the information about losing the right,
+before the code is shown or sent, and the timestamp written to the order
+metadata. Today that is Allegro, and Allegro orders follow Allegro's own
+withdrawal and consent process; the plugin's function is for orders placed
+through our own storefront, which does not exist yet. A future storefront must
+write `digital_content_consent_at` at checkout, otherwise every order keeps the
+14-day right.
 
 ## The acknowledgement
 

@@ -23,6 +23,8 @@ module.exports = defineConfig({
     {
       options: {
         withdrawal: {
+          // The digital-only spec sets this before the app boots.
+          digitalOnly: process.env.CC_TEST_DIGITAL_ONLY === "true",
           seller: { address: "ul. Testowa 1, 00-001 Warszawa", email: "sklep@example.com", name: "Sklep Testowy" },
         },
       },
