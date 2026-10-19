@@ -52,9 +52,35 @@ workflowy. Plugin nie dodaje linków między modułami, więc instalacja nie dot
 
 ## Instalacja
 
-```bash
-pnpm add @zanreal/medusa-consumer-compliance
+Tego pakietu nie ma jeszcze na npmie. Instaluje się go jako zależność gitową,
+przypiętą do konkretnego commitu:
+
+```jsonc title="package.json"
+{
+  "dependencies": {
+    "@zanreal/medusa-consumer-compliance": "github:zanreal-labs/medusa-consumer-compliance#ee3a8f2db91d3845a61d3c4e57d59f47ad7a318a"
+  }
+}
 ```
+
+Przypnij commit, na którym testowałeś. Opublikowanego tagu jeszcze nie ma, więc
+`#main` przesunąłby Ci się pod ręką przy najbliższym pushu; przypięty commit jutro
+znaczy to samo co dziś.
+
+Pakiet buduje się sam przy instalacji: `prepare` uruchamia `medusa plugin:build`,
+co zamienia pobrane źródła w katalog `.medusa/server`, na który wskazuje pole
+`exports`. pnpm w wersji 10 i nowszej domyślnie nie uruchamia takiego skryptu dla
+zależności, której jeszcze nie ufa, więc świeża instalacja wymaga jednorazowej
+zgody:
+
+```yaml title="pnpm-workspace.yaml"
+allowBuilds:
+  "@zanreal/medusa-consumer-compliance@https://codeload.github.com/zanreal-labs/medusa-consumer-compliance/tar.gz/ee3a8f2db91d3845a61d3c4e57d59f47ad7a318a": true
+```
+
+Kluczem jest dokładny adres archiwum, na który pnpm rozwiązuje przypięty commit,
+dlatego niesie ten sam SHA co linia zależności. Przesuwając pin, zmień oba miejsca
+naraz. Następnie zarejestruj wtyczkę:
 
 ```ts title="medusa-config.ts"
 module.exports = defineConfig({

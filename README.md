@@ -55,8 +55,11 @@ The legal basis of every rule, with sources and dates, is in
 
 ## Install
 
-```bash
-pnpm add @zanreal/medusa-consumer-compliance
+Not on npm yet: install it as a git dependency pinned to a commit, as described in
+[`docs/index.en.mdx`](./docs/index.en.mdx#install):
+
+```jsonc
+"@zanreal/medusa-consumer-compliance": "github:zanreal-labs/medusa-consumer-compliance#ee3a8f2db91d3845a61d3c4e57d59f47ad7a318a"
 ```
 
 ```ts
