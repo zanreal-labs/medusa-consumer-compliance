@@ -49,9 +49,33 @@ workflows. The plugin adds no module links, so installing it touches no core tab
 
 ## Install
 
-```bash
-pnpm add @zanreal/medusa-consumer-compliance
+This package is not on npm yet. It installs as a git dependency, pinned to a
+commit:
+
+```jsonc title="package.json"
+{
+  "dependencies": {
+    "@zanreal/medusa-consumer-compliance": "github:zanreal-labs/medusa-consumer-compliance#ee3a8f2db91d3845a61d3c4e57d59f47ad7a318a"
+  }
+}
 ```
+
+Pin to the commit you tested against. There is no published tag yet, so `#main`
+would move under you on the next push; a pinned commit means the same thing
+tomorrow that it means today.
+
+The package compiles itself on install - `prepare` runs `medusa plugin:build`,
+which turns the checked-out source into the `.medusa/server` output its `exports`
+point at. pnpm 10 and newer refuse to run that script for a dependency they do not
+already trust, so a fresh install needs it allowed once:
+
+```yaml title="pnpm-workspace.yaml"
+allowBuilds:
+  "@zanreal/medusa-consumer-compliance@https://codeload.github.com/zanreal-labs/medusa-consumer-compliance/tar.gz/ee3a8f2db91d3845a61d3c4e57d59f47ad7a318a": true
+```
+
+The key is the exact tarball URL pnpm resolves the pinned commit to, so it carries
+the same SHA as the dependency line. Move both together. Then register the plugin:
 
 ```ts title="medusa-config.ts"
 module.exports = defineConfig({
