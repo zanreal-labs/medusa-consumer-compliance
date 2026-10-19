@@ -1,0 +1,138 @@
+---
+title: Historia cen Omnibus
+description: Jak plugin zapisuje każdą cenę widzianą przez klienta i liczy najniższą cenę z 30 dni przed obniżką zgodnie z art. 4 ustawy o informowaniu o cenach i wyjaśnieniami UOKiK.
+---
+
+Gdy sklep informuje o obniżce ceny, obok obniżonej ceny musi pokazać najniższą
+cenę tego towaru z 30 dni przed obniżką (art. 4 ust. 2 ustawy o informowaniu o
+cenach towarów i usług, wdrażający art. 6a dyrektywy 98/6/WE). Do tego potrzebna
+jest historia, której domyślnie nikt nie prowadzi: Medusa zna cenę dzisiejszą, a
+nie ceny z ubiegłego miesiąca. Ten plugin ją prowadzi.
+
+## Co jest zapisywane
+
+Jeden wiersz na każdą cenę, którą mógł zobaczyć klient, osobno dla **wariantu** i
+**kontekstu cenowego**, z polami `valid_from` i `valid_to`. Kontekst to waluta i
+domyślnie region: plugin pyta moduł cen o cenę wyliczoną dokładnie tak, jak zrobi
+to sklep w tym regionie, więc uwzględnia cenniki, reguły regionów i ich
+harmonogramy. Celowo bez grupy klientów: historia dotyczy ceny oferowanej
+wszystkim.
+
+Wiersz przechowuje kwotę wyliczoną, kwotę regularną, identyfikator cennika i jego
+typ. Wierszy się nie edytuje: zmiana zamyka otwarty wiersz i otwiera nowy.
+Częściowy indeks unikalny gwarantuje jeden otwarty wiersz na serię.
+
+Zapisują trzy ścieżki, wszystkie przez ten sam idempotentny workflow:
+
+| Ścieżka | Kiedy | Po co |
+| --- | --- | --- |
+| Subskrybent zdarzeń | Kilka sekund po zmianie produktu, wariantu, ceny lub cennika | Zwykły przypadek. Zdarzenia z jednego zapisu łączą się w jedno przejście. |
+| Przegląd co godzinę | 17. minuta każdej godziny | Cennik, który startuje lub kończy się według harmonogramu, nie emituje zdarzenia. Przegląd datuje taką zmianę na `starts_at` lub `ends_at` cennika. To też zabezpieczenie na wszystko, co ominęło zdarzenia. |
+| Zapis początkowy | Na żądanie z panelu, a w praktyce przy pierwszym przeglądzie | Otwiera wiersz dla każdego wariantu po instalacji. |
+
+Ponowny zapis tej samej ceny niczego nie zmienia, więc ścieżki mogą się nakładać
+bez szkody. Działają też pod blokadą.
+
+## Cena odniesienia
+
+Dla bieżącej ceny wariantu plugin ustala:
+
+1. **Czy to komunikowana obniżka?** Domyślnie tak, gdy cena pochodzi z cennika
+   typu `sale` i jest niższa od regularnej (to, co standardowy sklep pokazuje jako
+   przekreśloną cenę). Przy `reductionDetection: "lower_than_original"` liczy się
+   każda cena poniżej regularnej. Cenniki z `ignoredPriceListIds` nigdy się nie
+   liczą.
+2. **Od kiedy trwa?** Od `valid_from` bieżącej ceny, cofając się po wcześniejszych
+   wierszach z tą samą obniżoną kwotą (niezmieniona obniżka przeniesiona do innego
+   cennika to wciąż ta sama obniżka).
+3. **Okres odniesienia**: 30 dni kalendarzowych przed tym dniem, czasu polskiego.
+   Ostatni dzień okresu to dzień poprzedzający dzień, w którym po raz pierwszy
+   można było kupić po obniżonej cenie (wyjaśnienia UOKiK), więc cena z poranka w
+   dniu obniżki się nie liczy.
+4. **Cena odniesienia**: najniższa cena obowiązująca w dowolnej chwili okresu,
+   łącznie z wcześniejszymi cenami promocyjnymi (wytyczne Komisji 2021/C 526/02).
+
+Wynik zawiera `reference_label`, odpowiadający sformułowaniom, których oczekuje
+UOKiK:
+
+| `reference_label` | Etykieta | Kiedy |
+| --- | --- | --- |
+| `lowest_30_days` | Najniższa cena z 30 dni przed obniżką | Przypadek standardowy (art. 4 ust. 2). |
+| `lowest_since_introduction` | Najniższa cena od wprowadzenia towaru | Towar jest w ofercie krócej niż 30 dni (art. 4 ust. 3). |
+| `price_before_reduction` | Cena przed obniżką | Towary szybko psujące się (art. 4 ust. 4). |
+
+UOKiK wyklucza inne etykiety, na przykład „cena referencyjna”, „cena omnibus” czy
+„było”. Store API zwraca tekst etykiety w żądanym języku jako
+`reference_label_text`.
+
+### Obniżki stopniowe
+
+Polska **nie skorzystała** z opcji art. 6a ust. 5 dyrektywy. UOKiK wskazuje, że
+każdy kolejny krok obniżki liczy się względem najniższej ceny z 30 dni przed tym
+krokiem, a ten okres obejmuje już wcześniejszą cenę promocyjną. Przykład UOKiK:
+10 zł od 1 maja, 8 zł od 10 czerwca, 4 zł od 15 czerwca. Obniżka z 15 czerwca to
+50%, względem 8 zł. Tak działa ustawienie domyślne, `per_change`.
+
+`gradualReductions: "keep_first"` zachowuje cenę odniesienia pierwszego kroku dla
+całej nieprzerwanej serii, dla sklepów w krajach, które z opcji skorzystały.
+
+### Towar w ofercie krócej niż 30 dni
+
+Okres liczy się od wprowadzenia towaru: daty utworzenia wariantu albo początku
+ostatniego nieprzerwanego okresu sprzedaży. Towar wycofany na dłużej niż 30 dni po
+powrocie traktowany jest jak nowy, krótsza przerwa tego nie zmienia (UOKiK). Towar
+wprowadzony i obniżony tego samego dnia dostaje cenę, którą miał tego dnia przed
+obniżką.
+
+### Towary szybko psujące się
+
+Produkty oznaczone w panelu jako szybko psujące się dostają cenę sprzed
+**pierwszej** obniżki bieżącej serii, a reguła 30 dni nie ma zastosowania (art. 4
+ust. 4). UOKiK przyjmuje roboczo termin przydatności do 14 dni od wprowadzenia do
+oferty albo szczególne warunki przechowywania. Oznaczenie produktu to decyzja
+sklepu.
+
+### Ostrzeżenia
+
+| Pole | Znaczenie |
+| --- | --- |
+| `history_incomplete` | Historia zaczyna się w trakcie okresu, a produkt istniał wcześniej. Typowe tuż po instalacji: cena odniesienia obejmuje tylko to, co plugin zobaczył. |
+| `reference_not_higher` | W okresie produkt był tak samo tani lub tańszy. Pokazanie ceny jako obniżki wprowadzałoby w błąd. |
+| `reason: "no_prior_price"` | Nie ma żadnej wcześniejszej ceny, na przykład produkt w promocji od pierwszej minuty. Nie pokazuj go jako obniżki. |
+
+Procent `reduction_percent` zawsze liczy się względem ceny odniesienia, nigdy
+względem ceny regularnej (TSUE C-330/23, UOKiK).
+
+## Kody rabatowe i obniżki poza cennikami
+
+UOKiK uznaje kod rabatowy na konkretne produkty, a także publicznie ogłoszony kod
+na wszystko, za komunikowaną obniżkę: najniższa cena z 30 dni musi być pokazana
+najpóźniej tam, gdzie kod jest stosowany, także w koszyku. Ceny uzyskane z takimi
+kodami stają się też punktem odniesienia dla kolejnych promocji.
+
+Plugin nie widzi promocji Medusy samodzielnie, bo ich efekt zależy od koszyka. Są
+na to dwa narzędzia:
+
+- **`reduction_started_at`** w trasach wariantów liczy obniżkę zaczynającą się w
+  podanym momencie, niezależnie od cennika. Podaj datę startu promocji i pokaż
+  zwrócone `reference_price` obok ceny po rabacie.
+- **Ceny zewnętrzne** (panel, karta historii cen, albo
+  `POST /admin/consumer-compliance/variants/:id/price-history/external`) zapisują
+  cenę dostępną przez pewien czas, na przykład 85 zł z kodem WEEKEND20. Liczy się
+  ona do najniższej ceny przy kolejnych obniżkach, ale nigdy nie jest ceną bieżącą.
+
+Które promocje podlegają regule, to kwestia polityki sklepu; zob. otwarte pytania
+w [Podstawie prawnej](./legal.pl.mdx).
+
+## Ograniczenia
+
+- **Podatek.** Zapisywana kwota to kwota wyliczona przez Medusę. Dla waluty z
+  cenami brutto (PLN w większości polskich konfiguracji) to cena brutto, czyli ta,
+  której wymaga prawo. Dla walut netto odpowiedź zawiera `tax_inclusive: false`, a
+  sklep musi doliczyć ten sam podatek co do wyświetlanej ceny.
+- **Ceny grup klientów i ceny spersonalizowane** nie są zapisywane. Sklep, który
+  pokazuje cenę grupy jako obniżkę, musi obsłużyć to osobno.
+- **Przechowywanie** domyślnie 400 dni i nigdy krócej niż okres odniesienia plus
+  jeden dzień. Wiersze potrzebne trwającej obniżce zostają niezależnie od tego.
+- **Przed instalacją** nic nie zapisano. Mówi o tym `history_incomplete` dla
+  każdego wariantu, aż minie 30 dni.

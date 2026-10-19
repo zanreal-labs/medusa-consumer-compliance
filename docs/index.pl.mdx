@@ -1,0 +1,90 @@
+---
+title: Przegląd
+description: Obowiązki sklepu internetowego wynikające z prawa konsumenckiego UE i Polski, obsłużone w Medusie v2 - historia cen Omnibus, ceny jednostkowe, dane bezpieczeństwa GPSR, funkcja odstąpienia od umowy oraz informacje o opiniach i personalizacji cen.
+---
+
+`@zanreal/medusa-consumer-compliance` to plugin do Medusy v2 dla sklepu, który
+sprzedaje konsumentom w Polsce (a na tych samych zasadach także w innych krajach
+UE). Przechowuje dane i prowadzi procesy, których prawo konsumenckie oczekuje od
+zaplecza sklepu, a frontowi sklepu oddaje wszystko, co trzeba pokazać klientowi.
+
+> **To nie jest porada prawna.** Plugin wspiera zgodność z przepisami, ale jej nie
+> gwarantuje. Etykiety, regulamin, pouczenie o odstąpieniu i każda decyzja z listy
+> [otwartych pytań prawnych](./legal.pl.mdx) wymagają sprawdzenia przez prawnika.
+> Podstawę prawną każdej reguły podaje strona
+> [Podstawa prawna i macierz zgodności](./legal.pl.mdx).
+
+## Co obejmuje
+
+| Obowiązek | Co robi plugin |
+| --- | --- |
+| Omnibus: najniższa cena z 30 dni przed obniżką | Zapisuje każdą zmianę ceny wariantu w każdym kontekście cenowym, liczy cenę odniesienia według polskich zasad i zwraca ją z etykietą, którą sklep musi wyświetlić. Zob. [Omnibus](./omnibus.pl.mdx). |
+| Cena jednostkowa | Przechowuje ilość netto, jednostkę i wyłączenia dla wariantu, liczy cenę jednostkową z bieżącej ceny. Zob. [Ceny jednostkowe](./unit-prices.pl.mdx). |
+| Informacje GPSR | Producenci i osoby odpowiedzialne w UE jako wspólne rekordy, ostrzeżenia po polsku, lista braków. Zob. [Bezpieczeństwo produktu](./product-safety.pl.mdx). |
+| Funkcja odstąpienia od umowy (dyrektywa 2023/2673) | Dwuetapowy proces w Store API, uprawnienie i termin dla każdej pozycji, potwierdzenie na trwałym nośniku, rejestr w panelu. Zob. [Odstąpienie](./withdrawal.pl.mdx). |
+| Opinie i personalizacja cen | Edytowalne teksty udostępniane przez Store API. Zob. [Informacje dla konsumenta](./disclosures.pl.mdx). |
+
+Czego plugin nie robi: nie renderuje niczego w sklepie, nie rozstrzyga, czy
+produkt szybko się psuje albo czy podlega GPSR, i nie klasyfikuje kodów
+rabatowych. To decyzje sklepu, a plugin zamienia każdą z nich w jawne pole zamiast
+zgadywać.
+
+## Jak to działa
+
+```text
+ moduł cen ──zdarzenia──> subskrybent historii cen ──┐
+ cenniki (z harmonogramem) ──co godzinę──────────────┤
+                                                      v
+                                  consumer_compliance_price_history
+                                                      │
+ sklep ── GET /store/products/:id/compliance ─────────┤──> cena odniesienia Omnibus + cena jednostkowa + blok GPSR
+ sklep ── POST /store/consumer-compliance/withdrawals (+ /confirm) ──> rekord odstąpienia ──> e-mail z potwierdzeniem
+ panel ── widżety produktu, Ustawienia > Zgodność konsumencka, rejestr odstąpień
+```
+
+Całość to moduł Medusy z własnymi tabelami i migracjami, a zapisy przechodzą przez
+workflowy. Plugin nie dodaje linków między modułami, więc instalacja nie dotyka
+żadnej tabeli rdzenia.
+
+## Instalacja
+
+```bash
+pnpm add @zanreal/medusa-consumer-compliance
+```
+
+```ts title="medusa-config.ts"
+module.exports = defineConfig({
+  plugins: [
+    {
+      resolve: "@zanreal/medusa-consumer-compliance",
+      options: {
+        withdrawal: {
+          seller: { name: "Sklep sp. z o.o.", address: "ul. Prosta 1, 00-001 Warszawa", email: "sklep@example.com" },
+        },
+      },
+    },
+  ],
+});
+```
+
+Następnie uruchom migracje i raz zapisz bieżące ceny:
+
+```bash
+npx medusa db:migrate
+# potem w panelu: Ustawienia > Zgodność konsumencka > Historia cen > Zapisz aktualne ceny teraz
+```
+
+To samo w ciągu godziny zrobi cogodzinny przegląd. Wszystkie opcje opisuje strona
+[Opcje i API panelu](./options.pl.mdx).
+
+## Panel administracyjny
+
+- **Strona produktu**: karta zgodności (GPSR, traktowanie obniżek, wyjątek od
+  prawa odstąpienia, ceny jednostkowe wariantów) i karta historii cen (wykres,
+  tabela, cena odniesienia, ceny zewnętrzne).
+- **Strona zamówienia**: odstąpienia złożone dla zamówienia.
+- **Odstąpienia** (menu boczne): rejestr wszystkich oświadczeń.
+- **Ustawienia > Zgodność konsumencka**: teksty informacji, producenci i osoby
+  odpowiedzialne, produkty z brakami GPSR, stan historii cen.
+
+Panel jest przetłumaczony na polski i angielski.

@@ -1,0 +1,138 @@
+---
+title: Odstąpienie od umowy
+description: Funkcja odstąpienia od umowy z dyrektywy 2023/2673 jako dwuetapowy proces w Store API, 14-dniowy termin liczony według polskich zasad, wyjątki ustawowe, potwierdzenie na trwałym nośniku i wzór formularza.
+---
+
+Konsument może odstąpić od umowy zawartej na odległość w ciągu 14 dni bez podania
+przyczyny (art. 27 ustawy o prawach konsumenta). Dyrektywa (UE) 2023/2673 dodaje
+do dyrektywy 2011/83/UE art. 11a: sklep, który zawiera umowy przez internet, musi
+udostępnić w swoim interfejsie **funkcję odstąpienia od umowy**. Obowiązuje od
+19 czerwca 2026 r.
+
+> **Stan w Polsce (19 października 2026 r.).** Polska ustawa wdrażająca nie
+> obowiązuje. Rządowy projekt UC169 (nowelizacja ustawy o prawach konsumenta z
+> nowymi art. 30a i 30b) trafił do konsultacji 10 września 2026 r. i miałby wejść w
+> życie 30 dni po ogłoszeniu, obejmując terminy na odstąpienie, które jeszcze
+> biegną. Opisany niżej proces odpowiada dyrektywie i projektowi. Zob.
+> [Podstawa prawna](./legal.pl.mdx).
+
+## Przebieg
+
+```text
+konsument                        sklep                                plugin
+---------                        -----                                ------
+„Odstąp od umowy tutaj”  ──>  wyszukanie (zamówienie + e-mail lub logowanie) ──> pozycje, uprawnienie, terminy
+imię, pozycje, e-mail    ──>  POST /withdrawals                      ──> rekord: pending_confirmation, token
+„Potwierdź odstąpienie   ──>  POST /withdrawals/:id/confirm (token)  ──> rekord: confirmed, submitted_at
+ od umowy”                                                              zdarzenie + e-mail z potwierdzeniem
+```
+
+**Etap pierwszy** zapisuje oświadczenie: imię i nazwisko konsumenta, umowę
+(zamówienie i pozycje) oraz e-mail do potwierdzenia, czyli trzy elementy z art.
+11a ust. 2. Nic nie zostaje jeszcze złożone. Odpowiedź zawiera jednorazowy
+`confirmation_token` (przechowywany jest tylko jego skrót), ważny przez
+`confirmationTtlMinutes` (domyślnie 60).
+
+**Etap drugi** to przycisk potwierdzenia. Jego chwila jest prawną chwilą złożenia
+oświadczenia, zapisywaną jako `submitted_at`; do zachowania terminu wystarczy
+złożenie przed jego upływem (art. 11a ust. 5, art. 30 ust. 2 ustawy). Plugin
+emituje wtedy `consumer_compliance.withdrawal.confirmed` i wysyła potwierdzenie.
+
+Gość wskazuje zamówienie numerem i adresem e-mail z zamówienia, zalogowany klient
+może użyć dowolnego swojego zamówienia. Zły e-mail i nieznane zamówienie dają tę
+samą odpowiedź 404, więc wyszukiwania nie da się użyć do sprawdzania numerów
+zamówień. Trasy powinny być objęte limitem żądań.
+
+## Etykiety
+
+| Element | Polski | Angielski |
+| --- | --- | --- |
+| Wejście do funkcji (na elemencie, który ją uruchamia) | Odstąp od umowy tutaj | Withdraw from contract here |
+| Przycisk potwierdzenia | Potwierdź odstąpienie od umowy | Confirm withdrawal |
+
+Obie pochodzą z polskiej wersji dyrektywy i projektu ustawy, a
+`GET /store/consumer-compliance/disclosures` zwraca je jako `withdrawal.labels`.
+Uzasadnienie projektu dodaje: etykieta jest na samym przycisku, konsument może
+wybrać pozycje, wstępnie wypełnione dane muszą dać się zmienić, a konsument nie
+może być przekierowywany na inną stronę.
+
+## Termin
+
+Dla każdej pozycji, według polskich zasad:
+
+- **towary**: 14 dni od objęcia w posiadanie; przy kilku towarach dostarczanych
+  osobno od dostarczenia ostatniego (art. 28 pkt 1). Plugin czyta realizacje
+  Medusy oznaczone jako doręczone. Dopóki nie doręczono wszystkich przesyłek,
+  termin nie biegnie, a funkcja pozostaje dostępna;
+- **pozycje bez wysyłki** (treści cyfrowe, usługi): 14 dni od zawarcia umowy,
+  czyli daty zamówienia (art. 28 pkt 2);
+- dnia zdarzenia nie wlicza się (art. 111 par. 2 Kodeksu cywilnego), a termin
+  kończy się o 23:59:59 czasu polskiego ostatniego dnia;
+- ostatni dzień przypadający w sobotę, niedzielę lub święto przesuwa się na
+  następny dzień roboczy (art. 115 Kodeksu cywilnego; UOKiK potwierdza, że ma to
+  zastosowanie). Wigilia jest dniem wolnym od 2025 r. Ustawienie
+  `extendOverNonWorkingDays: false` to wyłącza.
+
+Oświadczenie złożone po terminie jest przyjmowane i oznaczane
+`within_period: false`, bo ocenić je musi przedsiębiorca (jednym z powodów jest
+wydłużenie do 12 miesięcy z art. 29). `rejectOutsidePeriod: true` zamiast tego je
+odrzuca.
+
+## Wyjątki (art. 38 ust. 1)
+
+Każdy produkt może mieć jeden wyjątek ustawowy: według specyfikacji konsumenta,
+szybko się psujący, zapieczętowany ze względów higienicznych, nierozłącznie
+połączony, alkohol z ceną zależną od rynku, zapieczętowane nagrania lub
+oprogramowanie, czasopisma, treści cyfrowe. Większość wyłącza pozycję wprost. Dwa
+wymagają faktów, których sklep nie widzi:
+
+- **towary zapieczętowane** są wyłączone dopiero po otwarciu opakowania po
+  dostarczeniu, więc pozostają do wybrania, a decyzję podejmuje przedsiębiorca;
+- **treści cyfrowe** są wyłączone tylko wtedy, gdy konsument zgodził się na
+  natychmiastowe dostarczenie i przyjął do wiadomości utratę prawa. Zapisz tę
+  chwilę jako datę ISO w metadanych zamówienia pod kluczem
+  `digital_content_consent_at` (konfigurowalnym), gdy zamówienie zbiera zgodę.
+
+## Potwierdzenie
+
+Art. 11a ust. 4 wymaga potwierdzenia na trwałym nośniku, bez zbędnej zwłoki, z
+treścią oświadczenia oraz datą i godziną złożenia. Plugin wysyła je przez moduł
+powiadomień Medusy kanałem `email`, z gotowym `content` (temat, HTML i tekst, po
+polsku lub angielsku) oraz `template` i `data` dla dostawców, którzy renderują
+własne szablony. Jeśli wysyłka się nie uda, odstąpienie pozostaje złożone, błąd
+zapisuje się w rekordzie, a panel pozwala wysłać potwierdzenie ponownie.
+
+## Rejestr w panelu
+
+**Odstąpienia** w menu bocznym pokazują każde złożone oświadczenie z terminem,
+stanem potwierdzenia i pozycjami. Oświadczenie można oznaczyć jako obsłużone lub
+odrzucone, z notatką wewnętrzną, a strona zamówienia pokazuje jego odstąpienia.
+
+## Wzór formularza odstąpienia
+
+Konsument może też skorzystać z wzoru z załącznika nr 2 do ustawy o prawach
+konsumenta (t.j. Dz.U. 2026 poz. 1244), który powinien trafić do potwierdzenia
+zamówienia. Aktualne brzmienie:
+
+```text
+WZÓR FORMULARZA ODSTĄPIENIA OD UMOWY
+(formularz ten należy wypełnić i odesłać tylko w przypadku chęci odstąpienia od umowy)
+
+- Adresat [w tym miejscu przedsiębiorca powinien wpisać nazwę przedsiębiorcy,
+  pełny adres pocztowy oraz adres e-mail]
+- Ja/My(*) niniejszym informuję/informujemy(*) o moim/naszym odstąpieniu od umowy
+  sprzedaży następujących towarów(*) umowy dostawy następujących towarów(*)
+  umowy o dzieło polegającej na wykonaniu następujących towarów(*)/o świadczenie
+  następującej usługi(*)
+- Data zawarcia umowy(*)/odbioru(*)
+- Imię i nazwisko konsumenta(-ów)
+- Adres konsumenta(-ów)
+- Podpis konsumenta(-ów) (tylko jeżeli formularz jest przesyłany w wersji papierowej)
+- Data
+
+(*) Niepotrzebne skreślić.
+```
+
+Po uchwaleniu polskiej ustawy pouczenie (załącznik nr 1, objaśnienie 3) zyska
+zdanie o odstąpieniu przez internet; brzmienie z projektu cytuje
+[Podstawa prawna](./legal.pl.mdx).

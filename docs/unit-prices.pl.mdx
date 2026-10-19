@@ -1,0 +1,54 @@
+---
+title: Ceny jednostkowe i kaucja
+description: Ilość netto, cena jednostkowa wymagana przez rozporządzenie w sprawie uwidaczniania cen, jej wyłączenia oraz kaucja pokazywana osobno od ceny.
+---
+
+Art. 4 ust. 1 ustawy o informowaniu o cenach wymaga ceny jednostkowej obok ceny.
+Jednostki określa rozporządzenie w sprawie uwidaczniania cen (Dz.U. 2022 poz.
+2776) i plugin się go trzyma.
+
+## Dane wariantu
+
+| Pole | Znaczenie |
+| --- | --- |
+| `net_quantity`, `net_unit` | Ilość z opakowania: `g`, `kg`, `ml`, `l`, `cm`, `m`, `m2`, `m3` lub `piece`. |
+| `reference_unit` | `auto` albo jawna jednostka: `kg`, `per_100g`, `l`, `per_100ml`, `m`, `m2`, `m3`, `piece`, `per_10_pieces`, `per_100_pieces`. |
+| `drained_quantity` | Masa netto po odsączeniu, dla żywności w środku płynnym (par. 6). Dla żywności glazurowanej wpisz jako ilość masę netto bez glazury. |
+| `exempt_reason` | `none` albo jedno z wyłączeń z par. 7: `same_as_price`, `sold_as_set`, `sold_in_pairs`, `medicinal_product`. |
+| `deposit_amount`, `deposit_currency_code` | Kaucja systemu kaucyjnego za opakowanie napoju. |
+
+## Jak liczona jest cena jednostkowa
+
+`auto` wybiera jednostkę ustawową dla wymiaru (par. 4 ust. 1): kilogram dla masy,
+litr dla objętości, metr dla długości, metr kwadratowy dla powierzchni, metr
+sześcienny dla objętości w m³ i sztukę dla towarów sprzedawanych na sztuki. Podstawą
+jest bieżąca cena wyliczona, zaokrąglona do grosza, połówki w górę.
+
+| Wariant | Cena | Wynik |
+| --- | --- | --- |
+| 250 g | 10,00 zł | 40,00 zł / kg |
+| 250 g, jednostka `per_100g` | 10,00 zł | 4,00 zł / 100 g |
+| 400 g, po odsączeniu 240 g | 6,00 zł | 25,00 zł / kg |
+| 50 szt., jednostka `per_100_pieces` | 12,50 zł | 25,00 zł / 100 szt. |
+| 1 szt. | 19,99 zł | 19,99 zł / szt., `same_as_price: true` |
+
+**100 g i 100 ml to wybór sklepu.** Rozporządzenie nie ma progu: par. 4 ust. 2
+dopuszcza dziesiętne wielokrotności i podwielokrotności „w szczególnych
+przypadkach uzasadnionych rodzajem, przeznaczeniem lub zwyczajowo oferowaną
+ilością towarów”. Towar pakowany oznaczony liczbą sztuk może mieć cenę za sztukę
+albo za 10 lub 100 sztuk (par. 4 ust. 3).
+
+`same_as_price: true` oznacza cenę jednostkową równą cenie sprzedaży, której par.
+7 pkt 1 nie wymaga pokazywać. Sklep może ją pominąć.
+
+## Kaucja
+
+Od 1 października 2025 r. napoje w opakowaniach objętych systemem kaucyjnym mają
+kaucję. Ani ustawa o cenach, ani rozporządzenie, ani wyjaśnienia UOKiK nie mówią,
+jak ją pokazywać przy cenie. Ministerstwo Klimatu podaje, że kaucja jest doliczana
+przy kasie, a ustawa o VAT wyłącza ją z podstawy opodatkowania. Plugin traktuje ją
+więc jako osobną kwotę: zwraca ją obok ceny, nigdy w cenie, nigdy w cenie
+jednostkowej i nigdy w historii Omnibus. Pokaż ją jako „+ 0,50 zł kaucji” i jako
+osobną pozycję w koszyku. Pobranie kaucji przy zamówieniu (na przykład jako
+pozycji) wykracza poza ten plugin. Ta interpretacja jest na liście otwartych pytań
+w [Podstawie prawnej](./legal.pl.mdx).

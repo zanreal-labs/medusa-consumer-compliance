@@ -1,0 +1,291 @@
+{
+  "consumerCompliance": {
+    "common": {
+      "cancel": "Anuluj",
+      "delete": "Usuń",
+      "edit": "Edytuj",
+      "loadError": "Nie udało się wczytać danych",
+      "loading": "Wczytywanie...",
+      "loadMore": "Wczytaj więcej",
+      "next": "Dalej",
+      "none": "Brak",
+      "previous": "Wstecz",
+      "save": "Zapisz",
+      "disclaimer": "Plugin wspiera zgodność z prawem konsumenckim, ale nie jest poradą prawną. Regulamin, etykiety i procesy powinien sprawdzić prawnik."
+    },
+    "locales": {
+      "pl": "Polski",
+      "en": "Angielski"
+    },
+    "product": {
+      "heading": "Zgodność konsumencka",
+      "description": "Bezpieczeństwo produktu (GPSR), obniżki Omnibus, wyjątek od prawa odstąpienia i ceny jednostkowe.",
+      "omnibusMode": "Obniżki (Omnibus)",
+      "withdrawalException": "Prawo odstąpienia",
+      "saved": "Zapisano dane zgodności",
+      "saveError": "Nie udało się zapisać danych zgodności"
+    },
+    "gpsr": {
+      "heading": "Bezpieczeństwo produktu (GPSR)",
+      "complete": "Dane GPSR kompletne",
+      "issueCount_one": "{{count}} brak w GPSR",
+      "issueCount_few": "{{count}} braki w GPSR",
+      "issueCount_many": "{{count}} braków w GPSR",
+      "issueCount_other": "{{count}} braku w GPSR",
+      "notApplicable": "Produkt nie podlega GPSR (na przykład klucz licencyjny lub usługa)",
+      "manufacturer": "Producent",
+      "responsiblePerson": "Osoba odpowiedzialna w UE",
+      "identifier": "Identyfikator produktu",
+      "identifierHint": "Typ, model, partia lub numer seryjny tak, jak na produkcie. Kody kreskowe i SKU wariantów są pokazywane automatycznie.",
+      "noWarningsRequired": "Produkt nie ma ostrzeżeń ani informacji o bezpieczeństwie",
+      "warnings": "Ostrzeżenia",
+      "safetyInformation": "Informacje o bezpieczeństwie i instrukcje",
+      "documents": "Zdjęcia etykiet i instrukcji (adresy URL)",
+      "documentsHint": "Jeden adres w wierszu.",
+      "accessibility": "Informacje o dostępności",
+      "accessibilityHint": "Tekst alternatywny dla etykiet, piktogramów lub instrukcji pokazanych jako obraz (ustawa o dostępności).",
+      "product": "Produkt",
+      "missing": "Braki",
+      "reportDescription": "Braki ma {{missing}} z {{checked}} sprawdzonych produktów.",
+      "issues": {
+        "manufacturer_missing": "Nie wybrano producenta",
+        "manufacturer_name_missing": "Producent nie ma nazwy ani znaku towarowego",
+        "manufacturer_address_missing": "Producent nie ma adresu pocztowego",
+        "manufacturer_contact_missing": "Producent nie ma adresu e-mail ani strony",
+        "manufacturer_country_missing": "Producent nie ma kraju",
+        "responsible_person_missing": "Producent spoza UE: wymagana osoba odpowiedzialna w UE",
+        "responsible_person_address_missing": "Osoba odpowiedzialna nie ma adresu pocztowego",
+        "responsible_person_contact_missing": "Osoba odpowiedzialna nie ma adresu e-mail ani strony",
+        "responsible_person_outside_eu": "Osoba odpowiedzialna nie ma siedziby w UE",
+        "identifier_missing": "Brak identyfikatora, kodu kreskowego lub SKU",
+        "image_missing": "Brak zdjęcia produktu",
+        "warnings_missing": "Brak ostrzeżeń i informacji o bezpieczeństwie",
+        "warnings_not_in_required_language": "Ostrzeżenia nie są dostępne po polsku"
+      }
+    },
+    "omnibusModes": {
+      "standard": "Standard: najniższa cena z 30 dni przed obniżką",
+      "perishable": "Szybko psujący się: cena przed pierwszą obniżką",
+      "exempt": "Nie dotyczy (bez ceny odniesienia)"
+    },
+    "withdrawalExceptions": {
+      "none": "Prawo odstąpienia przysługuje",
+      "custom_made": "Wyłączone: według specyfikacji konsumenta",
+      "perishable": "Wyłączone: szybko się psuje lub krótki termin przydatności",
+      "sealed_hygiene": "Wyłączone po otwarciu: zdrowie lub higiena",
+      "inseparably_mixed": "Wyłączone: nierozłącznie połączone z innymi rzeczami",
+      "alcohol_market_price": "Wyłączone: alkohol z ceną zależną od rynku",
+      "sealed_media": "Wyłączone po otwarciu: nagrania lub oprogramowanie",
+      "periodicals": "Wyłączone: dzienniki i czasopisma",
+      "digital_content": "Wyłączone za zgodą: treści cyfrowe dostarczone od razu"
+    },
+    "unit": {
+      "heading": "Ceny jednostkowe",
+      "description": "Ilość netto każdego wariantu. Cena jednostkowa jest liczona z ceny sprzedaży. Kaucja jest pokazywana osobno i nigdy nie jest częścią ceny.",
+      "save": "Zapisz ceny jednostkowe",
+      "saved": "Zapisano ceny jednostkowe",
+      "saveError": "Nie udało się zapisać cen jednostkowych",
+      "invalidNumber": "Sprawdź liczby dla {{variant}}",
+      "columns": {
+        "variant": "Wariant",
+        "quantity": "Ilość netto",
+        "unit": "Jednostka",
+        "reference": "Cena za",
+        "drained": "Masa po odsączeniu",
+        "exemption": "Wyłączenie",
+        "deposit": "Kaucja"
+      },
+      "issues": {
+        "quantity_missing": "Brak ilości netto",
+        "unit_missing": "Brak jednostki",
+        "reference_unit_mismatch": "Jednostka ceny nie pasuje do jednostki ilości",
+        "drained_not_mass": "Masa po odsączeniu wymaga jednostki masy"
+      }
+    },
+    "units": {
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "l": "l",
+      "cm": "cm",
+      "m": "m",
+      "m2": "m²",
+      "m3": "m³",
+      "piece": "szt."
+    },
+    "referenceUnits": {
+      "auto": "Automatycznie",
+      "kg": "1 kg",
+      "per_100g": "100 g",
+      "l": "1 l",
+      "per_100ml": "100 ml",
+      "m": "1 m",
+      "m2": "1 m²",
+      "m3": "1 m³",
+      "piece": "1 szt.",
+      "per_10_pieces": "10 szt.",
+      "per_100_pieces": "100 szt."
+    },
+    "unitExemptions": {
+      "none": "Brak",
+      "same_as_price": "Równa cenie",
+      "sold_as_set": "Sprzedawany w zestawie",
+      "sold_in_pairs": "Sprzedawany tylko w parach",
+      "medicinal_product": "Produkt leczniczy"
+    },
+    "history": {
+      "heading": "Historia cen (Omnibus)",
+      "description": "Zapisane ceny wariantu w danym kontekście cenowym i cena, którą sklep musi pokazać obok obniżonej ceny.",
+      "variant": "Wariant",
+      "context": "Kontekst cenowy",
+      "current": "Aktualna cena",
+      "status": "Status",
+      "reduced": "Obniżka",
+      "notReduced": "Bez obniżki",
+      "exempt": "Nie dotyczy",
+      "reference": "Cena odniesienia",
+      "lowestInWindow": "Najniższa w ostatnich 30 dniach",
+      "incomplete": "Historia zaczyna się po tym, jak produkt był już w sprzedaży. Cena odniesienia obejmuje tylko to, co plugin zapisał.",
+      "notHigher": "W tym okresie produkt był tak samo tani lub tańszy. Pokazanie tej ceny jako obniżki wprowadzałoby w błąd.",
+      "noPriorPrice": "Nie ma wcześniejszej ceny do porównania. Nie pokazuj tej ceny jako obniżki.",
+      "reductionSince": "Obniżka od {{date}}",
+      "noData": "Brak zapisanych cen w tym okresie.",
+      "chartLabel": "Wykres historii cen",
+      "legend": "Ostatnie 90 dni. Cieniowanie: okres odniesienia. Linia przerywana: cena odniesienia.",
+      "columns": {
+        "from": "Od",
+        "to": "Do",
+        "price": "Cena",
+        "regular": "Cena regularna",
+        "kind": "Rodzaj"
+      },
+      "kinds": {
+        "regular": "Cena",
+        "sale": "Cennik promocyjny",
+        "external": "Zewnętrzna"
+      },
+      "now": "teraz",
+      "retention": "Historia jest przechowywana {{days}} dni, dłużej gdy wymaga tego trwająca obniżka.",
+      "externalHeading": "Zapisz cenę zewnętrzną",
+      "externalDescription": "Dla ceny dostępnej poza cennikami, na przykład z publicznym kodem rabatowym. Liczy się do najniższej ceny przy kolejnych obniżkach.",
+      "note": "Notatka",
+      "externalSave": "Zapisz",
+      "externalSaved": "Zapisano cenę zewnętrzną",
+      "externalError": "Nie udało się zapisać ceny zewnętrznej",
+      "externalInvalid": "Uzupełnij cenę i obie daty."
+    },
+    "referenceLabels": {
+      "lowest_30_days": "Najniższa cena z 30 dni przed obniżką",
+      "lowest_since_introduction": "Najniższa cena od wprowadzenia towaru",
+      "price_before_reduction": "Cena przed obniżką"
+    },
+    "settings": {
+      "heading": "Zgodność konsumencka",
+      "description": "Teksty pokazywane w sklepie, podmioty gospodarcze do GPSR, produkty z brakami i historia cen Omnibus.",
+      "saved": "Zapisano ustawienia",
+      "saveError": "Nie udało się zapisać ustawień",
+      "tabs": {
+        "disclosures": "Informacje",
+        "operators": "Producenci",
+        "gpsr": "Braki GPSR",
+        "history": "Historia cen"
+      },
+      "reviewsEnabled": "Sklep publikuje opinie klientów",
+      "reviews": "Jak weryfikujemy opinie",
+      "reviewsHint": "Czy i w jaki sposób zapewniasz, że publikowane opinie pochodzą od osób, które kupiły lub używały produktu. Wymagane wszędzie, gdzie są opinie.",
+      "personalisedUsed": "Ceny są indywidualnie dostosowywane na podstawie zautomatyzowanego podejmowania decyzji",
+      "personalised": "Informacja o personalizacji ceny",
+      "personalisedHint": "Pokazywana przed złożeniem zamówienia, gdy ceny są dostosowywane automatycznie.",
+      "withdrawalInfo": "Tekst przy przycisku odstąpienia",
+      "withdrawalInfoHint": "Opcjonalnie, na przykład adres do odesłania towaru.",
+      "omnibusNote": "Notatka przy obniżonych cenach",
+      "omnibusNoteHint": "Opcjonalnie, na przykład wyjaśnienie w podpowiedzi."
+    },
+    "operators": {
+      "description": "Producenci, osoby odpowiedzialne w UE i importerzy, wpisywani raz i przypisywani do produktów.",
+      "name": "Nazwa",
+      "tradeName": "Zarejestrowana nazwa handlowa lub znak towarowy",
+      "role": "Rola",
+      "country": "Kraj",
+      "countryCode": "Kod kraju (ISO, np. PL)",
+      "contact": "Kontakt",
+      "address": "Adres pocztowy",
+      "email": "E-mail",
+      "url": "Strona internetowa",
+      "phone": "Telefon",
+      "add": "Dodaj",
+      "saved": "Zapisano",
+      "saveError": "Nie udało się zapisać",
+      "deleted": "Usunięto",
+      "deleteError": "Nie udało się usunąć",
+      "nameRequired": "Nazwa jest wymagana."
+    },
+    "operatorRoles": {
+      "manufacturer": "Producent",
+      "responsible_person": "Osoba odpowiedzialna w UE",
+      "importer": "Importer"
+    },
+    "priceHistory": {
+      "description": "Ceny są zapisywane przy każdej zmianie i uzgadniane co godzinę. Po instalacji pluginu lub imporcie katalogu zapisz od razu wszystkie aktualne ceny.",
+      "backfill": "Zapisz aktualne ceny teraz",
+      "backfillStarted": "Zapisywanie uruchomione w tle",
+      "backfillError": "Nie udało się uruchomić zapisywania",
+      "windowDays": "Okres odniesienia (dni)",
+      "gradual": "Obniżki stopniowe",
+      "retentionDays": "Przechowywanie (dni)",
+      "withdrawalDays": "Termin odstąpienia (dni)"
+    },
+    "gradualModes": {
+      "per_change": "Każdy krok względem 30 dni przed nim (prawo polskie)",
+      "keep_first": "Zachowaj pierwszą cenę odniesienia"
+    },
+    "withdrawals": {
+      "heading": "Odstąpienia",
+      "description": "Oświadczenia o odstąpieniu od umowy złożone przez funkcję odstąpienia w sklepie.",
+      "filter": "Status",
+      "all": "Wszystkie",
+      "empty": "Brak odstąpień.",
+      "count_one": "{{count}} odstąpienie",
+      "count_few": "{{count}} odstąpienia",
+      "count_many": "{{count}} odstąpień",
+      "count_other": "{{count}} odstąpienia",
+      "columns": {
+        "submitted": "Złożono",
+        "order": "Zamówienie",
+        "customer": "Klient",
+        "period": "Termin",
+        "acknowledgement": "Potwierdzenie",
+        "status": "Status"
+      },
+      "inPeriod": "W terminie",
+      "outsidePeriod": "Złożone po terminie na odstąpienie",
+      "notSent": "Nie wysłano",
+      "notStarted": "Nie rozpoczął się (czeka na doręczenie)",
+      "deadline": "Termin",
+      "items": "Produkty",
+      "statement": "Oświadczenie",
+      "reason": "Podany powód",
+      "note": "Notatka wewnętrzna",
+      "detailTitle": "Odstąpienie od zamówienia #{{order}}",
+      "ackFailed": "Potwierdzenie nie zostało wysłane",
+      "resend": "Wyślij potwierdzenie ponownie",
+      "resent": "Wysłano potwierdzenie",
+      "resendError": "Nie udało się wysłać potwierdzenia",
+      "reopen": "Otwórz ponownie",
+      "reject": "Odrzuć",
+      "markProcessed": "Oznacz jako obsłużone",
+      "updated": "Zaktualizowano odstąpienie",
+      "updateError": "Nie udało się zaktualizować odstąpienia",
+      "orderHeading": "Odstąpienia",
+      "wholeOrder": "Całe zamówienie",
+      "open": "Otwórz w rejestrze"
+    },
+    "withdrawalStatuses": {
+      "pending_confirmation": "Czeka na potwierdzenie",
+      "confirmed": "Złożone",
+      "processed": "Obsłużone",
+      "rejected": "Odrzucone",
+      "expired": "Wygasłe"
+    }
+  }
+}

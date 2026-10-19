@@ -1,0 +1,138 @@
+---
+title: Omnibus price history
+description: How the plugin records every price a customer saw and computes the lowest price of the 30 days before a reduction, following art. 4 of the Polish price information act and the UOKiK guidance.
+---
+
+When a shop announces a price reduction, it must show next to the reduced price
+the lowest price of that product in the 30 days before the reduction (art. 4
+ust. 2 of the Polish act on price information, implementing art. 6a of Directive
+98/6/EC). Computing that number needs a history nobody keeps by default: Medusa
+stores the current price, not the prices of last month. This plugin keeps it.
+
+## What is recorded
+
+One row per price a customer could see, per **variant** and **pricing context**,
+with `valid_from` and `valid_to`. A context is a currency and, by default, a
+region: the plugin asks the pricing module for the calculated price exactly as a
+storefront in that region would, so price lists, region rules and their schedules
+are all applied. No customer group is passed, on purpose: the history is about
+the price offered to the public.
+
+Each row keeps the calculated amount, the regular (original) amount, the price
+list id and its type. Rows are never edited; a change closes the open row and
+opens a new one. A partial unique index guarantees one open row per series.
+
+Three paths write to it, all through the same idempotent workflow:
+
+| Path | When | Why |
+| --- | --- | --- |
+| Event subscriber | Seconds after a product, variant, price or price list change | The normal case. Events from one save are coalesced into one pass. |
+| Hourly sweep | Minute 17 of every hour | A price list that starts or ends on its schedule emits no event. The sweep dates such a change to the list's own `starts_at` or `ends_at`. It is also the backstop for anything an event missed. |
+| Backfill | On demand from the admin, and implicitly on the first sweep | Opens a row for every variant after installation. |
+
+Recording the same price twice writes nothing, so all three can overlap safely.
+They also run under a lock.
+
+## The reference price
+
+For the current price of a variant, the plugin decides:
+
+1. **Is it an announced reduction?** By default, when the calculated price comes
+   from a price list of type `sale` and is lower than the regular price (what the
+   stock storefront shows as a struck-through price). With
+   `reductionDetection: "lower_than_original"`, any price below the regular price
+   counts. Price lists in `ignoredPriceListIds` never count.
+2. **When did it start?** The `valid_from` of the current price, extended back over
+   earlier rows with the same reduced amount (an unchanged reduction moved to
+   another list is still the same reduction).
+3. **The window**: the 30 calendar days before that day, in Polish time. Its last
+   day is the day before the reduced price could first be bought (UOKiK guidance),
+   so a price applied in the morning of the reduction day does not count.
+4. **The reference**: the lowest price that applied at any moment in the window,
+   earlier promotional prices included (Commission guidance 2021/C 526/02).
+
+The result carries a `reference_label`, which maps to the wording UOKiK expects:
+
+| `reference_label` | Polish label | When |
+| --- | --- | --- |
+| `lowest_30_days` | Najniższa cena z 30 dni przed obniżką | Standard case (art. 4 ust. 2). |
+| `lowest_since_introduction` | Najniższa cena od wprowadzenia towaru | The product has been on offer for less than 30 days (art. 4 ust. 3). |
+| `price_before_reduction` | Cena przed obniżką | Perishable goods (art. 4 ust. 4). |
+
+UOKiK rules out other labels such as "cena referencyjna", "cena omnibus" or
+"było". The Store API returns the label text in the requested language as
+`reference_label_text`.
+
+### Gradual reductions
+
+Poland did **not** adopt the option of art. 6a(5) of the directive. UOKiK states
+that each deeper step of a reduction is measured against the lowest price of the
+30 days before that step, which then includes the previous promotional price.
+UOKiK's own example: 10 zł from 1 May, 8 zł from 10 June, 4 zł from 15 June. The
+15 June reduction is 50%, against 8 zł. That is the default, `per_change`.
+
+`gradualReductions: "keep_first"` keeps the first step's reference for the whole
+uninterrupted series, for stores in member states that did adopt the option.
+
+### Products on offer for less than 30 days
+
+The window starts when the product was introduced: the variant's creation date,
+or the start of its latest stretch on sale. A product withdrawn for more than 30
+days counts as newly introduced on its return; a shorter break does not (UOKiK).
+A product introduced and reduced on the same day uses the price it had before the
+reduction that day.
+
+### Perishable goods
+
+Products marked `perishable` in the admin use the price from before the **first**
+reduction of the current series, and the 30-day rule does not apply (art. 4 ust.
+4). UOKiK's working definition is a shelf life of up to 14 days from introduction
+to the offer, or special storage conditions. Marking a product is a store
+decision.
+
+### Warnings the plugin raises
+
+| Flag | Meaning |
+| --- | --- |
+| `history_incomplete` | The history starts inside the window and the product existed before. Typical right after installation: the reference covers only what the plugin saw. |
+| `reference_not_higher` | The product was this cheap or cheaper within the window. Presenting the price as a reduction would be misleading. |
+| `reason: "no_prior_price"` | There is no earlier price at all, for example a product on sale from its first minute. Do not present it as a reduction. |
+
+The percentage `reduction_percent` is always computed against the reference
+price, never against the regular price (CJEU C-330/23, UOKiK).
+
+## Discount codes and other reductions outside price lists
+
+UOKiK treats a discount code tied to specific products, or a publicly announced
+code for everything, as an announced reduction: the 30-day lowest price must be
+shown at the latest where the code is applied, the cart included. Prices obtained
+with such codes also become reference prices for later promotions.
+
+The plugin cannot see Medusa promotions on its own, because their effect depends
+on a cart. Two tools cover it:
+
+- **`reduction_started_at`** on the variant endpoints evaluates a reduction that
+  starts at a given moment, whatever the price list says. Use the promotion's
+  start date and show the returned `reference_price` next to the discounted price.
+- **External price windows** (admin, price history card, or
+  `POST /admin/consumer-compliance/variants/:id/price-history/external`) record a
+  price that was obtainable for a period, for example 85 zł with code WEEKEND20.
+  It counts towards the lowest price of later reductions but never as the current
+  price.
+
+Which promotions are in scope is a policy question; see the open questions in
+[Legal basis](./legal.en.mdx).
+
+## Limits worth knowing
+
+- **Tax.** The recorded amount is Medusa's calculated amount. For a currency whose
+  prices include tax (PLN in most Polish setups) it is the gross price, which is
+  what the law asks for. For tax-exclusive currencies the response says
+  `tax_inclusive: false`, and the storefront must apply the same tax it applies to
+  the displayed price.
+- **Customer groups and personalised prices** are not recorded. A storefront that
+  shows a group price as a reduction must handle that case separately.
+- **Retention** defaults to 400 days and never goes below the window plus one day.
+  Rows still needed by a running reduction are kept regardless.
+- **Before installation** nothing was recorded. `history_incomplete` says so,
+  per variant, until 30 days have passed.

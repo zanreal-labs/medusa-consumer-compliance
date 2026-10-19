@@ -1,0 +1,95 @@
+---
+title: Opcje i API panelu
+description: Każda opcja pluginu z wartością domyślną i progiem ustawowym, zadania cykliczne, emitowane zdarzenie i trasy API panelu.
+---
+
+## Opcje
+
+```ts title="medusa-config.ts"
+{
+  resolve: "@zanreal/medusa-consumer-compliance",
+  options: {
+    defaultLocale: "pl",
+    omnibus: {
+      windowDays: 30,
+      gradualReductions: "per_change",
+      reductionDetection: "sale_price_list",
+      priceContexts: undefined,
+      ignoredPriceListIds: [],
+      retentionDays: 400,
+    },
+    withdrawal: {
+      periodDays: 14,
+      rejectOutsidePeriod: false,
+      extendOverNonWorkingDays: true,
+      digitalConsentMetadataKey: "digital_content_consent_at",
+      confirmationTtlMinutes: 60,
+      notificationChannel: "email",
+      notificationTemplate: "consumer-compliance-withdrawal-acknowledgement",
+      merchantNotificationEmail: null,
+      seller: { name: "", address: "", email: "" },
+    },
+  },
+}
+```
+
+| Opcja | Domyślnie | Uwagi |
+| --- | --- | --- |
+| `defaultLocale` | `pl` | Język zapasowy dla tekstów w wersjach językowych. |
+| `omnibus.windowDays` | `30` | Może być dłuższy, nigdy krótszy: wartości poniżej 30 są podnoszone do 30. |
+| `omnibus.gradualReductions` | `per_change` | Prawo polskie. `keep_first` tylko tam, gdzie przyjęto art. 6a ust. 5 dyrektywy 98/6/WE. |
+| `omnibus.reductionDetection` | `sale_price_list` | `lower_than_original` liczy też cenniki typu override poniżej ceny regularnej. |
+| `omnibus.priceContexts` | po jednym na region | `[{ currency_code: "pln", region_id?: "reg_..." }]`, żeby zapisywać wybrane konteksty. |
+| `omnibus.ignoredPriceListIds` | `[]` | Cenniki, które nigdy nie są obniżką (na przykład B2B). |
+| `omnibus.retentionDays` | `400` | Co najmniej `windowDays + 1`. Historia potrzebna trwającej obniżce zostaje niezależnie od tego. |
+| `withdrawal.periodDays` | `14` | Może być dłuższy (hojniejsza polityka), nigdy krótszy. |
+| `withdrawal.rejectOutsidePeriod` | `false` | `true` odrzuca spóźnione oświadczenia w API zamiast je oznaczać. |
+| `withdrawal.extendOverNonWorkingDays` | `true` | Art. 115 Kodeksu cywilnego. |
+| `withdrawal.digitalConsentMetadataKey` | `digital_content_consent_at` | Klucz metadanych zamówienia z chwilą zgody (art. 38 ust. 1 pkt 13). |
+| `withdrawal.confirmationTtlMinutes` | `60` | Jak długo można potwierdzić etap pierwszy. |
+| `withdrawal.notificationChannel` | `email` | Kanał potwierdzenia. |
+| `withdrawal.notificationTemplate` | jak wyżej | Przekazywany dostawcom z własnymi szablonami; gotowe `content` jest dołączane zawsze. |
+| `withdrawal.merchantNotificationEmail` | `null` | Dostaje kopię każdego potwierdzenia. |
+| `withdrawal.seller` | puste | Drukowane w potwierdzeniu. |
+
+## Zadania i zdarzenia
+
+| Nazwa | Harmonogram | Co robi |
+| --- | --- | --- |
+| `consumer-compliance-price-sweep` | `17 * * * *` | Zapisuje bieżącą cenę każdego wariantu; wyłapuje start i koniec cenników z harmonogramem. |
+| `consumer-compliance-housekeeping` | `41 3 * * *` | Unieważnia niepotwierdzone żądania odstąpienia, usuwa historię po okresie przechowywania. |
+
+Subskrybenci słuchają zdarzeń produktów, wariantów, cen i cenników (historia cen)
+oraz `product.deleted` (usuwa dane zgodności produktu; historia zostaje do końca
+okresu przechowywania). Plugin emituje `consumer_compliance.withdrawal.confirmed` z
+`{ id, order_id }`.
+
+## Workflowy
+
+Eksportowane z `@zanreal/medusa-consumer-compliance/workflows`:
+`recordPriceHistoryWorkflow`, `upsertProductComplianceWorkflow`,
+`upsertUnitPricingWorkflow`, `upsertEconomicOperatorWorkflow`,
+`deleteEconomicOperatorWorkflow`, `updateComplianceSettingsWorkflow`,
+`requestWithdrawalWorkflow`, `confirmWithdrawalWorkflow`,
+`resendWithdrawalAcknowledgementWorkflow`, `updateWithdrawalStatusWorkflow`.
+
+## API panelu
+
+Wszystko pod `/admin/consumer-compliance`, z uwierzytelnieniem jak każda trasa
+panelu.
+
+| Metoda i ścieżka | Co robi |
+| --- | --- |
+| `GET /products/:id` | Rekord zgodności, braki GPSR, podmioty, ceny jednostkowe wariantów. |
+| `POST /products/:id` | Tworzy lub aktualizuje rekord zgodności. |
+| `POST /products/:id/unit-pricing` | `{ variants: [{ variant_id, net_quantity, net_unit, reference_unit, drained_quantity, exempt_reason, deposit_amount }] }` |
+| `GET /variants/:id/price-history?context_key=pln\|reg_...` | Historia, ocena na teraz, dostępne konteksty. |
+| `POST /variants/:id/price-history/external` | `{ context_key, amount, valid_from, valid_to, note }`: cena zewnętrzna. |
+| `POST /price-history/backfill` | Zapisuje wszystkie bieżące ceny w tle (202). |
+| `GET /operators`, `POST /operators` | Lista i tworzenie podmiotów gospodarczych. |
+| `POST /operators/:id`, `DELETE /operators/:id` | Zmiana; usunięcie (odmowa, gdy podmiot jest przypisany). |
+| `GET /settings`, `POST /settings` | Teksty informacji oraz obowiązujące opcje. |
+| `GET /gpsr-report?offset=0` | Opublikowane produkty z brakami GPSR, po 50. |
+| `GET /withdrawals?status=&order_id=&offset=&limit=` | Rejestr. |
+| `GET /withdrawals/:id`, `POST /withdrawals/:id` | Odczyt; ustawienie `status` na `processed`, `rejected` lub z powrotem `confirmed`, z `note`. |
+| `POST /withdrawals/:id/resend` | Ponowna wysyłka potwierdzenia. |

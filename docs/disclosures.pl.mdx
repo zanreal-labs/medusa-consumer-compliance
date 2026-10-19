@@ -1,0 +1,40 @@
+---
+title: Opinie i personalizacja cen
+description: Dwie informacje z dyrektywy Omnibus, które sklep musi sformułować sam, edytowane w panelu i udostępniane przez Store API.
+---
+
+Obie to teksty, które może napisać tylko sklep, więc plugin je przechowuje i
+udostępnia; nie jest systemem opinii.
+
+## Opinie
+
+Sklep, który udostępnia opinie konsumentów, musi podać, **czy i w jaki sposób**
+zapewnia, że pochodzą one od osób, które używały produktu lub go kupiły (art. 6
+ust. 4 pkt 7 ustawy o przeciwdziałaniu nieuczciwym praktykom rynkowym, art. 7 ust.
+6 dyrektywy 2005/29/WE). Twierdzenie, że opinie są weryfikowane, bez rozsądnych
+kroków sprawdzających, oraz publikowanie lub zniekształcanie opinii są na czarnej
+liście (art. 7 pkt 25 i 26).
+
+Tekst wpisz w **Ustawienia > Zgodność konsumencka > Informacje**, prostym
+językiem: kto może wystawić opinię, czy i jak sprawdzany jest zakup, czy
+publikowane są wszystkie opinie, jak działa moderacja, czy któreś opinie były
+nagradzane. Pokaż go bezpośrednio przy bloku opinii.
+
+## Personalizacja cen
+
+Jeżeli ceny są indywidualnie dostosowywane na podstawie zautomatyzowanego
+podejmowania decyzji, konsument musi się o tym dowiedzieć przed złożeniem
+zamówienia (art. 12 ust. 1 pkt 5a ustawy o prawach konsumenta, art. 6 ust. 1 lit.
+ea dyrektywy 2011/83/UE). Ceny dynamiczne bez personalizacji nie są objęte tym
+obowiązkiem. Włącz „ceny są personalizowane” i wpisz informację; Store API zwraca
+`personalised_pricing.used` oraz tekst.
+
+## Teksty opcjonalne
+
+- **Informacja przy odstąpieniu**, pokazywana obok przycisku (na przykład adres do
+  odesłania towaru).
+- **Notatka Omnibus**, pokazywana przy obniżonych cenach (na przykład w
+  podpowiedzi).
+
+Wszystkie teksty mają wersje językowe i wracają jako `null`, gdy nie są wypełnione,
+żeby sklep mógł nic nie renderować zamiast pustego nagłówka.

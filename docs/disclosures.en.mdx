@@ -1,0 +1,37 @@
+---
+title: Reviews and personalised pricing
+description: The two Omnibus disclosures a shop must make in its own words, edited in the admin and served by the Store API.
+---
+
+Both are texts only the store can write, so the plugin stores and serves them; it
+is not a review system.
+
+## Reviews
+
+A shop that gives access to consumer reviews must say **whether and how** it
+ensures they come from consumers who used or bought the product (art. 6 ust. 4
+pkt 7 of the Polish unfair market practices act, art. 7(6) of Directive
+2005/29/EC). Claiming reviews are verified without reasonable steps to check, and
+publishing or distorting reviews, are blacklisted (art. 7 pkt 25 and 26).
+
+Write the text in **Settings > Consumer compliance > Disclosures**, in plain
+language: who can post, whether purchase is checked and how, whether all reviews
+are published, how moderation works, whether any were incentivised. Show it
+directly next to the reviews block.
+
+## Personalised pricing
+
+If prices are individually adjusted on the basis of automated decision-making,
+the consumer must be told before ordering (art. 12 ust. 1 pkt 5a of the consumer
+rights act, art. 6(1)(ea) of Directive 2011/83/EU). Dynamic pricing that does not
+personalise is not covered. Switch on "prices are personalised" and write the
+notice; the Store API returns `personalised_pricing.used` and the text.
+
+## Optional texts
+
+- **Withdrawal info**, shown next to the withdrawal button (for example where to
+  send goods back).
+- **Omnibus note**, shown with reduced prices (for example in a tooltip).
+
+All texts are localised and come back as `null` when not filled in, so the
+storefront can render nothing rather than an empty heading.

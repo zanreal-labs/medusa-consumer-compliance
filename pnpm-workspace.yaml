@@ -1,0 +1,8 @@
+# pnpm 11 refuses to run a dependency's build scripts unless it is listed here.
+# These are the native builds a Medusa install performs anyway.
+allowBuilds:
+  "@medusajs/telemetry": true
+  "@swc/core": true
+  esbuild: true
+  msgpackr-extract: true
+  protobufjs: true

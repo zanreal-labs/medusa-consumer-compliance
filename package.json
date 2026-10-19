@@ -1,0 +1,107 @@
+{
+  "name": "@zanreal/medusa-consumer-compliance",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Medusa v2 plugin for EU and Polish consumer-protection duties of an online shop: Omnibus 30-day lowest price history, unit prices, GPSR product safety data, the online withdrawal function and the reviews and personalised pricing disclosures.",
+  "keywords": [
+    "consumer-protection",
+    "gpsr",
+    "medusa",
+    "medusa-plugin",
+    "medusa-v2",
+    "omnibus",
+    "price-history",
+    "right-of-withdrawal",
+    "unit-price"
+  ],
+  "homepage": "https://zanreal.com/docs/oss/medusa-consumer-compliance",
+  "bugs": {
+    "url": "https://github.com/zanreal-labs/medusa-consumer-compliance/issues"
+  },
+  "license": "MIT",
+  "author": "ZanReal <opensource@zanreal.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zanreal-labs/medusa-consumer-compliance.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    ".medusa/server",
+    "CHANGELOG.md"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./workflows": "./.medusa/server/src/workflows/index.js",
+    "./.medusa/server/src/modules/*": "./.medusa/server/src/modules/*/index.js",
+    "./modules/*": "./.medusa/server/src/modules/*/index.js",
+    "./providers/*": "./.medusa/server/src/providers/*/index.js",
+    "./*": "./.medusa/server/src/*.js",
+    "./admin": {
+      "import": "./.medusa/server/src/admin/index.mjs",
+      "require": "./.medusa/server/src/admin/index.js",
+      "default": "./.medusa/server/src/admin/index.js"
+    }
+  },
+  "scripts": {
+    "build": "medusa plugin:build",
+    "dev": "medusa plugin:develop",
+    "lint": "medusa lint",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck:admin": "tsc --noEmit -p src/admin/tsconfig.json",
+    "test": "pnpm run typecheck && pnpm run typecheck:admin && vitest run",
+    "test:unit": "vitest run",
+    "test:integration": "medusa plugin:build && vitest run --config vitest.integration.config.mts",
+    "test:watch": "vitest",
+    "prepare": "medusa plugin:build",
+    "prepublishOnly": "medusa plugin:build"
+  },
+  "devDependencies": {
+    "@medusajs/admin-sdk": "2.21.2",
+    "@medusajs/admin-shared": "2.21.2",
+    "@medusajs/cli": "2.21.2",
+    "@medusajs/eslint-plugin": "2.21.2",
+    "@medusajs/framework": "2.21.2",
+    "@medusajs/icons": "2.21.2",
+    "@medusajs/js-sdk": "2.21.2",
+    "@medusajs/medusa": "2.21.2",
+    "@medusajs/orchestration": "2.21.2",
+    "@medusajs/test-utils": "2.21.2",
+    "@medusajs/ui": "4.2.6",
+    "@swc/core": "^1.16.2",
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "eslint": "^9.39.5",
+    "i18next": "^23.16.8",
+    "jiti": "^2.7.0",
+    "prop-types": "^15.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-i18next": "^13.5.0",
+    "react-router-dom": "7.18.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6",
+    "vitest": "^3.2.7",
+    "yalc": "1.0.0-pre.53"
+  },
+  "peerDependencies": {
+    "@medusajs/admin-sdk": "2.21.2",
+    "@medusajs/admin-shared": "2.21.2",
+    "@medusajs/cli": "2.21.2",
+    "@medusajs/framework": "2.21.2",
+    "@medusajs/icons": "2.21.2",
+    "@medusajs/js-sdk": "2.21.2",
+    "@medusajs/medusa": "2.21.2",
+    "@medusajs/test-utils": "2.21.2",
+    "@medusajs/ui": "4.2.6",
+    "react-i18next": "^13.5.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "packageManager": "pnpm@11.13.0"
+}

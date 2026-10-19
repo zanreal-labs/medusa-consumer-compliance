@@ -1,0 +1,287 @@
+{
+  "consumerCompliance": {
+    "common": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "loadError": "Could not load the data",
+      "loading": "Loading...",
+      "loadMore": "Load more",
+      "next": "Next",
+      "none": "None",
+      "previous": "Previous",
+      "save": "Save",
+      "disclaimer": "This plugin supports compliance with consumer protection law but is not legal advice. Have your terms, labels and processes reviewed by a lawyer."
+    },
+    "locales": {
+      "pl": "Polish",
+      "en": "English"
+    },
+    "product": {
+      "heading": "Consumer compliance",
+      "description": "Product safety (GPSR), Omnibus treatment, withdrawal exception and unit prices.",
+      "omnibusMode": "Omnibus treatment",
+      "withdrawalException": "Right of withdrawal",
+      "saved": "Compliance data saved",
+      "saveError": "Could not save the compliance data"
+    },
+    "gpsr": {
+      "heading": "Product safety (GPSR)",
+      "complete": "GPSR data complete",
+      "issueCount_one": "{{count}} GPSR gap",
+      "issueCount_other": "{{count}} GPSR gaps",
+      "notApplicable": "This product is not covered by GPSR (for example a licence key or a service)",
+      "manufacturer": "Manufacturer",
+      "responsiblePerson": "Responsible person in the EU",
+      "identifier": "Product identifier",
+      "identifierHint": "Type, model, batch or serial number as printed on the product. Barcodes and SKUs of the variants are shown automatically.",
+      "noWarningsRequired": "The product carries no warnings or safety information",
+      "warnings": "Warnings",
+      "safetyInformation": "Safety information and instructions",
+      "documents": "Label and instruction images (URLs)",
+      "documentsHint": "One URL per line.",
+      "accessibility": "Accessibility notes",
+      "accessibilityHint": "Text alternative for labels, pictograms or instructions shown as images (European Accessibility Act).",
+      "product": "Product",
+      "missing": "Missing",
+      "reportDescription": "{{missing}} of {{checked}} checked products have gaps.",
+      "issues": {
+        "manufacturer_missing": "No manufacturer selected",
+        "manufacturer_name_missing": "Manufacturer has no name or trade name",
+        "manufacturer_address_missing": "Manufacturer has no postal address",
+        "manufacturer_contact_missing": "Manufacturer has no e-mail or website",
+        "manufacturer_country_missing": "Manufacturer has no country",
+        "responsible_person_missing": "Manufacturer is outside the EU: an EU responsible person is required",
+        "responsible_person_address_missing": "Responsible person has no postal address",
+        "responsible_person_contact_missing": "Responsible person has no e-mail or website",
+        "responsible_person_outside_eu": "Responsible person is not established in the EU",
+        "identifier_missing": "No product identifier, barcode or SKU",
+        "image_missing": "No product image",
+        "warnings_missing": "No warnings or safety information",
+        "warnings_not_in_required_language": "Warnings are not available in Polish"
+      }
+    },
+    "omnibusModes": {
+      "standard": "Standard: lowest price in the 30 days before the reduction",
+      "perishable": "Perishable: price before the first reduction",
+      "exempt": "Not covered (no reference price)"
+    },
+    "withdrawalExceptions": {
+      "none": "Right of withdrawal applies",
+      "custom_made": "Excluded: made to the consumer's specification",
+      "perishable": "Excluded: perishable or short shelf life",
+      "sealed_hygiene": "Excluded once unsealed: health or hygiene reasons",
+      "inseparably_mixed": "Excluded: inseparably mixed with other items",
+      "alcohol_market_price": "Excluded: alcohol with market-dependent price",
+      "sealed_media": "Excluded once unsealed: recordings or software",
+      "periodicals": "Excluded: newspapers and periodicals",
+      "digital_content": "Excluded with consent: digital content supplied immediately"
+    },
+    "unit": {
+      "heading": "Unit prices",
+      "description": "Net quantity per variant. The unit price is computed from the selling price. Deposit (kaucja) is shown separately and is never part of the price.",
+      "save": "Save unit prices",
+      "saved": "Unit prices saved",
+      "saveError": "Could not save the unit prices",
+      "invalidNumber": "Check the numbers for {{variant}}",
+      "columns": {
+        "variant": "Variant",
+        "quantity": "Net quantity",
+        "unit": "Unit",
+        "reference": "Unit price per",
+        "drained": "Drained weight",
+        "exemption": "Exemption",
+        "deposit": "Deposit"
+      },
+      "issues": {
+        "quantity_missing": "Net quantity missing",
+        "unit_missing": "Unit missing",
+        "reference_unit_mismatch": "Unit price unit does not match the quantity unit",
+        "drained_not_mass": "Drained weight needs a mass unit"
+      }
+    },
+    "units": {
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "l": "l",
+      "cm": "cm",
+      "m": "m",
+      "m2": "m²",
+      "m3": "m³",
+      "piece": "pcs"
+    },
+    "referenceUnits": {
+      "auto": "Automatic",
+      "kg": "1 kg",
+      "per_100g": "100 g",
+      "l": "1 l",
+      "per_100ml": "100 ml",
+      "m": "1 m",
+      "m2": "1 m²",
+      "m3": "1 m³",
+      "piece": "1 piece",
+      "per_10_pieces": "10 pieces",
+      "per_100_pieces": "100 pieces"
+    },
+    "unitExemptions": {
+      "none": "None",
+      "same_as_price": "Equal to the price",
+      "sold_as_set": "Sold as a set",
+      "sold_in_pairs": "Sold only in pairs",
+      "medicinal_product": "Medicinal product"
+    },
+    "history": {
+      "heading": "Price history (Omnibus)",
+      "description": "Recorded prices per variant and pricing context, and the reference price a storefront must show next to a reduced price.",
+      "variant": "Variant",
+      "context": "Pricing context",
+      "current": "Current price",
+      "status": "Status",
+      "reduced": "Reduced",
+      "notReduced": "Not reduced",
+      "exempt": "Not covered",
+      "reference": "Reference price",
+      "lowestInWindow": "Lowest in the last 30 days",
+      "incomplete": "The history starts after this product was already on sale. The reference price only covers what the plugin recorded.",
+      "notHigher": "The product was this cheap or cheaper within the window. Presenting this price as a reduction would be misleading.",
+      "noPriorPrice": "There is no earlier price to compare with. Do not present this price as a reduction.",
+      "reductionSince": "Reduction since {{date}}",
+      "noData": "No recorded prices in this period yet.",
+      "chartLabel": "Price history chart",
+      "legend": "Last 90 days. Shaded: reference window. Dashed: reference price.",
+      "columns": {
+        "from": "From",
+        "to": "To",
+        "price": "Price",
+        "regular": "Regular price",
+        "kind": "Type"
+      },
+      "kinds": {
+        "regular": "Price",
+        "sale": "Sale price list",
+        "external": "External"
+      },
+      "now": "now",
+      "retention": "History is kept for {{days}} days, longer where a running reduction needs it.",
+      "externalHeading": "Record an external price",
+      "externalDescription": "For a price obtainable outside price lists, for example a public discount code. It counts towards the lowest price of later reductions.",
+      "note": "Note",
+      "externalSave": "Record",
+      "externalSaved": "External price recorded",
+      "externalError": "Could not record the external price",
+      "externalInvalid": "Fill in the price and both dates."
+    },
+    "referenceLabels": {
+      "lowest_30_days": "Lowest price in the 30 days before the reduction",
+      "lowest_since_introduction": "Lowest price since the product was introduced",
+      "price_before_reduction": "Price before the reduction"
+    },
+    "settings": {
+      "heading": "Consumer compliance",
+      "description": "Texts the storefront shows, economic operators for GPSR, products with gaps and the Omnibus price history.",
+      "saved": "Settings saved",
+      "saveError": "Could not save the settings",
+      "tabs": {
+        "disclosures": "Disclosures",
+        "operators": "Manufacturers",
+        "gpsr": "GPSR gaps",
+        "history": "Price history"
+      },
+      "reviewsEnabled": "The store publishes customer reviews",
+      "reviews": "How reviews are verified",
+      "reviewsHint": "Whether and how you ensure that published reviews come from customers who bought or used the product. Required wherever reviews are shown.",
+      "personalisedUsed": "Prices are personalised on the basis of automated decision-making",
+      "personalised": "Personalised pricing notice",
+      "personalisedHint": "Shown before the order when prices are individually adjusted by automated decisions.",
+      "withdrawalInfo": "Text next to the withdrawal button",
+      "withdrawalInfoHint": "Optional. For example where to send the goods back.",
+      "omnibusNote": "Note next to reduced prices",
+      "omnibusNoteHint": "Optional, for example an explanation shown in a tooltip."
+    },
+    "operators": {
+      "description": "Manufacturers, EU responsible persons and importers, entered once and assigned to products.",
+      "name": "Name",
+      "tradeName": "Registered trade name or trade mark",
+      "role": "Role",
+      "country": "Country",
+      "countryCode": "Country code (ISO, e.g. PL)",
+      "contact": "Contact",
+      "address": "Postal address",
+      "email": "E-mail",
+      "url": "Website",
+      "phone": "Phone",
+      "add": "Add",
+      "saved": "Saved",
+      "saveError": "Could not save",
+      "deleted": "Deleted",
+      "deleteError": "Could not delete",
+      "nameRequired": "The name is required."
+    },
+    "operatorRoles": {
+      "manufacturer": "Manufacturer",
+      "responsible_person": "EU responsible person",
+      "importer": "Importer"
+    },
+    "priceHistory": {
+      "description": "Prices are recorded on every change and reconciled hourly. Record all current prices now after installing the plugin or importing a catalog.",
+      "backfill": "Record current prices now",
+      "backfillStarted": "Recording started in the background",
+      "backfillError": "Could not start recording",
+      "windowDays": "Reference window (days)",
+      "gradual": "Gradual reductions",
+      "retentionDays": "Retention (days)",
+      "withdrawalDays": "Withdrawal period (days)"
+    },
+    "gradualModes": {
+      "per_change": "Each step against the 30 days before it (Polish law)",
+      "keep_first": "Keep the first reference"
+    },
+    "withdrawals": {
+      "heading": "Withdrawals",
+      "description": "Statements of withdrawal submitted through the online withdrawal function.",
+      "filter": "Status",
+      "all": "All",
+      "empty": "No withdrawals yet.",
+      "count_one": "{{count}} withdrawal",
+      "count_other": "{{count}} withdrawals",
+      "columns": {
+        "submitted": "Submitted",
+        "order": "Order",
+        "customer": "Customer",
+        "period": "Period",
+        "acknowledgement": "Acknowledgement",
+        "status": "Status"
+      },
+      "inPeriod": "Within the period",
+      "outsidePeriod": "Submitted after the withdrawal period",
+      "notSent": "Not sent",
+      "notStarted": "Not started (awaiting delivery)",
+      "deadline": "Deadline",
+      "items": "Items",
+      "statement": "Statement",
+      "reason": "Reason given",
+      "note": "Internal note",
+      "detailTitle": "Withdrawal from order #{{order}}",
+      "ackFailed": "Acknowledgement not sent",
+      "resend": "Resend acknowledgement",
+      "resent": "Acknowledgement sent",
+      "resendError": "Could not send the acknowledgement",
+      "reopen": "Reopen",
+      "reject": "Reject",
+      "markProcessed": "Mark as processed",
+      "updated": "Withdrawal updated",
+      "updateError": "Could not update the withdrawal",
+      "orderHeading": "Withdrawals",
+      "wholeOrder": "The whole order",
+      "open": "Open in the register"
+    },
+    "withdrawalStatuses": {
+      "pending_confirmation": "Awaiting confirmation",
+      "confirmed": "Submitted",
+      "processed": "Processed",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    }
+  }
+}

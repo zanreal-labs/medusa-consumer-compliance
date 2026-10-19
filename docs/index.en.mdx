@@ -1,0 +1,87 @@
+---
+title: Overview
+description: EU and Polish consumer-protection duties of an online shop, supported in Medusa v2 - Omnibus price history, unit prices, GPSR product safety data, the online withdrawal function and the reviews and personalised pricing disclosures.
+---
+
+`@zanreal/medusa-consumer-compliance` is a Medusa v2 plugin for a shop that sells
+to consumers in Poland (and, with the same rules, elsewhere in the EU). It keeps
+the data and runs the processes that consumer law expects of a store's backend,
+and hands the storefront everything it needs to show it.
+
+> **Not legal advice.** The plugin supports compliance; it does not deliver it.
+> Labels, terms, the withdrawal instructions and every decision listed under
+> [open legal questions](./legal.en.mdx) need a lawyer's review. The legal basis
+> of every rule is cited in [Legal basis and compliance matrix](./legal.en.mdx).
+
+## What it covers
+
+| Duty | What the plugin does |
+| --- | --- |
+| Omnibus: lowest price in the 30 days before a reduction | Records every price change per variant and pricing context, computes the reference price by the Polish rules, exposes it with the label the storefront must print. See [Omnibus](./omnibus.en.mdx). |
+| Unit price | Stores net quantity, unit and exemptions per variant, computes the unit price from the live price. See [Unit prices](./unit-prices.en.mdx). |
+| GPSR product information | Manufacturers and EU responsible persons as reusable records, warnings in Polish, validation of what is missing. See [Product safety](./product-safety.en.mdx). |
+| Online withdrawal function (Directive 2023/2673) | A two-step Store API flow, per-item eligibility and deadlines, the acknowledgement on a durable medium, an admin register. See [Withdrawal](./withdrawal.en.mdx). |
+| Reviews and personalised pricing | Editable texts served by the Store API. See [Disclosures](./disclosures.en.mdx). |
+
+What it does not do: render anything in your storefront, decide whether a product
+is perishable or covered by GPSR, or classify your discount codes. Those are store
+decisions, and the plugin makes each of them an explicit field instead of a guess.
+
+## How it fits together
+
+```text
+ pricing module ──events──> price history subscriber ──┐
+ price lists (scheduled) ──hourly sweep────────────────┤
+                                                        v
+                                    consumer_compliance_price_history
+                                                        │
+ storefront ── GET /store/products/:id/compliance ──────┤──> Omnibus reference + unit price + GPSR block
+ storefront ── POST /store/consumer-compliance/withdrawals (+ /confirm) ──> withdrawal record ──> acknowledgement e-mail
+ admin ── product widgets, Settings > Consumer compliance, Withdrawals register
+```
+
+Everything is a Medusa module with its own tables and migrations, written through
+workflows. The plugin adds no module links, so installing it touches no core table.
+
+## Install
+
+```bash
+pnpm add @zanreal/medusa-consumer-compliance
+```
+
+```ts title="medusa-config.ts"
+module.exports = defineConfig({
+  plugins: [
+    {
+      resolve: "@zanreal/medusa-consumer-compliance",
+      options: {
+        withdrawal: {
+          seller: { name: "Shop sp. z o.o.", address: "ul. Prosta 1, 00-001 Warszawa", email: "shop@example.com" },
+        },
+      },
+    },
+  ],
+});
+```
+
+Then run the migrations and record the current prices once:
+
+```bash
+npx medusa db:migrate
+# then in the admin: Settings > Consumer compliance > Price history > Record current prices now
+```
+
+The hourly sweep would do the same within the hour. Every option is described in
+[Options and admin API](./options.en.mdx).
+
+## Admin
+
+- **Product page**: a compliance card (GPSR data, Omnibus treatment, withdrawal
+  exception, unit prices per variant) and a price history card (chart, table,
+  reference price, external price windows).
+- **Order page**: withdrawals submitted for the order.
+- **Withdrawals** (sidebar): the register of every withdrawal statement.
+- **Settings > Consumer compliance**: disclosure texts, manufacturers and
+  responsible persons, the list of products with GPSR gaps, price history status.
+
+The admin is translated into Polish and English.

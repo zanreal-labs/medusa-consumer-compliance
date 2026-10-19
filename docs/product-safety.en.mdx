@@ -1,0 +1,68 @@
+---
+title: Product safety (GPSR)
+description: The information art. 19 of the General Product Safety Regulation requires in every online offer, kept as reusable manufacturer and responsible person records, with Polish warnings and a list of what is missing.
+---
+
+Since 13 December 2024, every online offer of a consumer product must show
+clearly and visibly (art. 19 of Regulation (EU) 2023/988):
+
+1. the manufacturer's name, registered trade name or trade mark, and its postal
+   and electronic address;
+2. if the manufacturer is not established in the EU, the same for the responsible
+   person in the EU;
+3. information identifying the product, including a picture, its type and any
+   other identifier;
+4. warnings and safety information, in a language consumers easily understand.
+
+In Poland that language is Polish (art. 4 of the act of 7 November 2025 on
+supervision of general product safety, Dz.U. 2025 poz. 1826, in force since
+3 January 2026). A missing art. 19 element can cost up to 500 000 zł (art. 76).
+
+## Economic operators
+
+Manufacturers, EU responsible persons and importers are kept once
+(**Settings > Consumer compliance > Manufacturers**) and assigned to products: a
+catalogue usually has a few brands and many products. An operator has a name,
+trade name, postal address, country code, e-mail, website and phone. The country
+decides whether a responsible person in the EU is required. An operator still
+assigned to products cannot be deleted.
+
+## Product data
+
+On the product page, the compliance card holds:
+
+| Field | Notes |
+| --- | --- |
+| Not covered by GPSR | For things that are not consumer products in the GPSR sense, such as a licence key or a service. Switches all checks off. |
+| Manufacturer, responsible person | Picked from the operators. |
+| Product identifier | Type, model, batch or serial number. Variant SKUs and barcodes (EAN, UPC) are added automatically. |
+| Warnings, safety information | Localised, Polish first. |
+| No warnings required | An explicit statement, so an empty field is never mistaken for a decision. |
+| Label and instruction images | URLs, one per line. |
+| Accessibility notes | Localised text alternative for labels or instructions shown as images (see below). |
+
+## Validation
+
+The card shows what is missing, and **Settings > Consumer compliance > GPSR gaps**
+lists every published product with gaps. The checks:
+
+- a manufacturer with a name or trade name, a postal address, an e-mail or
+  website, and a country;
+- a responsible person when the manufacturer is outside the EU, itself with an
+  address and contact and established in the EU;
+- an identifier (the product's own, or a variant SKU or barcode) and an image;
+- warnings or safety information in Polish, unless the product is marked as
+  needing none.
+
+Validation never blocks a save: a half-filled record is better than none.
+
+## Accessibility (European Accessibility Act)
+
+The Polish accessibility act (Dz.U. 2024 poz. 731) applies to e-commerce services
+from 28 June 2025, except services of microenterprises (fewer than 10 people and
+at most EUR 2 million turnover or balance sheet). Almost all of it is storefront
+work: WCAG 2.1 AA in identification, checkout, payment and the withdrawal
+function, and accessibility information in the terms. What a backend can add is
+data: the accessibility notes field above, product identifiers in text rather than
+only in images, and acknowledgement e-mails with a plain-text part (the plugin
+sends both HTML and text).

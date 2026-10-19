@@ -1,0 +1,135 @@
+---
+title: Withdrawal from the contract
+description: The online withdrawal function of Directive 2023/2673 as a two-step Store API flow, the 14-day period computed by Polish rules, statutory exceptions, the acknowledgement on a durable medium and the model withdrawal form.
+---
+
+A consumer may withdraw from a distance contract within 14 days without giving a
+reason (art. 27 of the Polish consumer rights act). Directive (EU) 2023/2673 adds
+art. 11a to Directive 2011/83/EU: a shop that concludes contracts online must
+offer a **withdrawal function** on its online interface. It applies from 19 June
+2026.
+
+> **Status in Poland (19 October 2026).** The Polish implementing act is not in
+> force. The government draft UC169 (amending the consumer rights act with new
+> art. 30a and 30b) was sent to consultation on 10 September 2026 and would enter
+> into force 30 days after publication, covering withdrawal periods still running
+> at that date. The flow below follows the directive and the draft. See
+> [Legal basis](./legal.en.mdx).
+
+## The flow
+
+```text
+consumer                         storefront                         plugin
+--------                         ----------                         ------
+"Odstąp od umowy tutaj"  ──>  lookup (order + e-mail, or logged in) ──> items, eligibility, deadlines
+fills name, items, e-mail ──>  POST /withdrawals                     ──> record: pending_confirmation, token
+"Potwierdź odstąpienie   ──>  POST /withdrawals/:id/confirm (token)  ──> record: confirmed, submitted_at
+ od umowy"                                                              event + acknowledgement e-mail
+```
+
+**Step one** records the statement: the consumer's name, the contract (order and
+items), and the e-mail for the confirmation (the three elements of art. 11a(2)).
+Nothing is submitted yet. The response carries a one-time `confirmation_token`
+(only its hash is stored), valid for `confirmationTtlMinutes` (60 by default).
+
+**Step two** is the confirmation button. Its moment is the legal submission time,
+stored as `submitted_at`; sending the statement before the period ends is enough
+(art. 11a(5), art. 30 ust. 2 of the act). The plugin then emits
+`consumer_compliance.withdrawal.confirmed` and sends the acknowledgement.
+
+A guest identifies the order by its number and the order e-mail; a logged-in
+customer can use any of their orders. A wrong e-mail and an unknown order give the
+same 404, so the lookup cannot probe order numbers. Put the routes behind your rate
+limiter.
+
+## Labels
+
+| Element | Polish | English |
+| --- | --- | --- |
+| Entry point (on the element that opens the function) | Odstąp od umowy tutaj | Withdraw from contract here |
+| Confirmation button | Potwierdź odstąpienie od umowy | Confirm withdrawal |
+
+Both come from the Polish text of the directive and the draft act, and are
+returned by `GET /store/consumer-compliance/disclosures` as `withdrawal.labels`.
+The draft's explanatory memorandum adds: the label sits on the button itself, the
+consumer can pick items, pre-filled data must be editable, and the consumer must
+not be redirected to another page.
+
+## The period
+
+Per item, by Polish rules:
+
+- **goods**: 14 days from taking possession; for several goods delivered
+  separately, from the last delivery (art. 28 pkt 1). The plugin reads Medusa
+  fulfillments marked delivered. Until every shipment is delivered, the period has
+  not started and the function stays available;
+- **items without shipping** (digital content, services): 14 days from the
+  conclusion of the contract, the order date (art. 28 pkt 2);
+- the day of the event is not counted (art. 111 par. 2 of the Civil Code) and the
+  period ends at 23:59:59 Polish time on its last day;
+- a last day on a Saturday, Sunday or public holiday moves to the next working day
+  (art. 115 of the Civil Code; UOKiK confirms this applies). Christmas Eve is a
+  public holiday from 2025. Set `extendOverNonWorkingDays: false` to switch it off.
+
+A statement submitted after the period is still accepted and marked
+`within_period: false`, because the trader has to assess it (the extension to 12
+months under art. 29 is one reason). `rejectOutsidePeriod: true` refuses it
+instead.
+
+## Exceptions (art. 38 ust. 1)
+
+Each product can carry one statutory exception: custom-made, perishable, sealed
+hygiene goods, inseparably mixed, alcohol with a market-dependent price, sealed
+recordings or software, periodicals, digital content. Most exclude the item
+outright. Two need facts the shop cannot see:
+
+- **sealed goods** are excluded only once unsealed after delivery, so they stay
+  selectable and the trader decides;
+- **digital content** is excluded only if the consumer consented to immediate
+  supply and acknowledged losing the right. Store that moment as an ISO date in
+  the order metadata key `digital_content_consent_at` (configurable) when the
+  checkout collects the consent.
+
+## The acknowledgement
+
+Art. 11a(4) requires an acknowledgement on a durable medium, without undue delay,
+with the statement's content and the date and time of submission. The plugin sends
+it through the Medusa notification module on the `email` channel with ready
+`content` (subject, HTML and text, Polish or English) plus `template` and `data`
+for providers that render their own. If sending fails, the withdrawal stays
+submitted, the error is stored on the record, and the admin can resend it.
+
+## The admin register
+
+**Withdrawals** in the sidebar lists every submitted statement with its deadline,
+acknowledgement status and items. A statement can be marked processed or
+rejected with an internal note, and the order page shows its withdrawals.
+
+## Model withdrawal form
+
+The consumer may also use the model form of załącznik nr 2 to the consumer rights
+act (t.j. Dz.U. 2026 poz. 1244), which the order confirmation should carry.
+Current wording:
+
+```text
+WZÓR FORMULARZA ODSTĄPIENIA OD UMOWY
+(formularz ten należy wypełnić i odesłać tylko w przypadku chęci odstąpienia od umowy)
+
+- Adresat [w tym miejscu przedsiębiorca powinien wpisać nazwę przedsiębiorcy,
+  pełny adres pocztowy oraz adres e-mail]
+- Ja/My(*) niniejszym informuję/informujemy(*) o moim/naszym odstąpieniu od umowy
+  sprzedaży następujących towarów(*) umowy dostawy następujących towarów(*)
+  umowy o dzieło polegającej na wykonaniu następujących towarów(*)/o świadczenie
+  następującej usługi(*)
+- Data zawarcia umowy(*)/odbioru(*)
+- Imię i nazwisko konsumenta(-ów)
+- Adres konsumenta(-ów)
+- Podpis konsumenta(-ów) (tylko jeżeli formularz jest przesyłany w wersji papierowej)
+- Data
+
+(*) Niepotrzebne skreślić.
+```
+
+Once the Polish act passes, the instructions (załącznik nr 1, note 3) gain a
+sentence about withdrawing online; the draft wording is quoted in
+[Legal basis](./legal.en.mdx).

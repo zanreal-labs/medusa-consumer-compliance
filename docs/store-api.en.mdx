@@ -1,0 +1,156 @@
+---
+title: Store API
+description: Every Store API route the plugin adds, with parameters and response shapes.
+---
+
+All routes need the publishable API key header, like every `/store` route, and
+answer only for published products in the key's sales channels.
+
+The read routes for a product page sit under `/store/products/:id/...`, so a
+deployment that only exposes `GET /store/products*` publicly needs no ingress
+change for them. The withdrawal routes are `POST`s under
+`/store/consumer-compliance/` and do need to be reachable.
+
+## Product compliance
+
+`GET /store/products/:id/compliance?region_id=reg_...&locale=pl`
+
+`region_id` (or `currency_code` instead) chooses the pricing context. Response:
+
+```json
+{
+  "product_id": "prod_01...",
+  "variants": [
+    {
+      "variant_id": "variant_01...",
+      "currency_code": "pln",
+      "tax_inclusive": true,
+      "omnibus": {
+        "status": "ok",
+        "current_amount": 80,
+        "original_amount": 100,
+        "is_reduced": true,
+        "reduction_started_at": "2026-10-10T08:00:00.000Z",
+        "reference_price": 100,
+        "reference_basis": "lowest_in_window",
+        "reference_label": "lowest_30_days",
+        "reference_label_text": "Najniższa cena z 30 dni przed obniżką",
+        "reduction_percent": 20,
+        "window_days": 30,
+        "window_start": "2026-09-09T22:00:00.000Z",
+        "window_end": "2026-10-09T22:00:00.000Z",
+        "offered_less_than_window": false,
+        "history_incomplete": false,
+        "reference_not_higher": false,
+        "lowest_price_in_window": 80,
+        "reason": null
+      },
+      "unit_price": { "amount": 47.06, "reference_unit": "l", "reference_label": "l", "based_on": "net_quantity", "same_as_price": false },
+      "deposit": { "amount": 0.5, "currency_code": "pln" }
+    }
+  ],
+  "safety": {
+    "applicable": true,
+    "manufacturer": { "name": "Producent sp. z o.o.", "trade_name": null, "postal_address": "ul. Prosta 1, Warszawa", "country_code": "pl", "email": "kontakt@producent.pl", "url": null },
+    "responsible_person": null,
+    "product_identifier": "Model X-1",
+    "variant_identifiers": [{ "variant_id": "variant_01...", "sku": "KETTLE-1", "barcode": null, "ean": "5901234123457", "upc": null }],
+    "warnings": "Nie zanurzać w wodzie.",
+    "safety_information": null,
+    "safety_document_urls": [],
+    "accessibility_notes": null
+  }
+}
+```
+
+`omnibus.status` is `no_price` when the variant has no price in the context and
+`exempt` for products marked as not covered. `unit_price` and `deposit` are `null`
+when not configured. Field meanings are in [Omnibus](./omnibus.en.mdx) and
+[Unit prices](./unit-prices.en.mdx).
+
+## Variants in bulk
+
+`GET /store/consumer-compliance/variants?ids=variant_1,variant_2&region_id=...`
+
+Up to 100 ids, for listing pages. Returns `{ "variants": [...] }` with the same
+variant objects as above. Ids that are not visible to the key are dropped.
+
+`GET /store/consumer-compliance/variants/:id/omnibus?region_id=...`
+
+One variant's `omnibus` block.
+
+Both accept `reduction_started_at=ISO date` to evaluate a reduction that is not a
+price list, such as a discount code campaign started at that moment.
+
+## Disclosures
+
+`GET /store/consumer-compliance/disclosures?locale=pl`
+
+```json
+{
+  "reviews": { "enabled": true, "text": "Opinie mogą wystawiać wyłącznie osoby, które kupiły produkt..." },
+  "personalised_pricing": { "used": false, "text": null },
+  "withdrawal": {
+    "period_days": 14,
+    "labels": { "entry": "Odstąp od umowy tutaj", "confirm": "Potwierdź odstąpienie od umowy" },
+    "text": null
+  },
+  "omnibus_note": null
+}
+```
+
+## Withdrawal
+
+All three routes accept a logged-in customer (session or bearer token) and work
+for guests.
+
+`POST /store/consumer-compliance/withdrawals/lookup`
+
+```json
+{ "display_id": "1042", "email": "jan@example.com" }
+```
+
+A logged-in customer may send `{ "order_id": "order_..." }` alone. Returns the
+order (`id`, `display_id`, `placed_at`, `canceled`) and `assessment`: per item
+`eligible`, `excluded_reason`, `basis` (`delivery`, `contract_conclusion`,
+`awaiting_delivery`), `deadline_at`, `within_period`, plus the order-level
+`deadline_at`. Mismatch and unknown order both give 404.
+
+`POST /store/consumer-compliance/withdrawals`
+
+```json
+{
+  "display_id": "1042",
+  "email": "jan@example.com",
+  "customer_name": "Jan Kowalski",
+  "contact_email": "jan@example.com",
+  "items": [{ "line_item_id": "ordli_...", "quantity": 1 }],
+  "statement": "optional, the default wording is used when omitted",
+  "reason": "optional, never required",
+  "locale": "pl"
+}
+```
+
+Omit `items` to withdraw from every eligible item. `201` with
+`{ "withdrawal": {...}, "confirmation_token": "..." }`. The withdrawal is
+`pending_confirmation`; nothing is submitted yet. Errors: excluded item, quantity
+above the ordered one, canceled order, or (with `rejectOutsidePeriod`) a period
+that has ended.
+
+`POST /store/consumer-compliance/withdrawals/:id/confirm`
+
+```json
+{ "token": "..." }
+```
+
+Submits the statement: `status: "confirmed"`, `submitted_at` set, acknowledgement
+sent (`acknowledgement_sent_at`). A wrong token, an unknown id and an already
+confirmed request all answer 404. An expired request answers 400 and must be
+started again.
+
+`GET /store/consumer-compliance/withdrawals` (logged-in customer only)
+
+The customer's submitted withdrawals.
+
+The public withdrawal object never contains the token hash, the assessment
+internals or the trader's notes.

@@ -1,0 +1,53 @@
+---
+title: Unit prices and deposit
+description: Net quantity, the unit price required by the Polish price display regulation, its exemptions, and the deposit (kaucja) shown separately from the price.
+---
+
+Art. 4 ust. 1 of the Polish price information act requires the unit price next to
+the price. The regulation on displaying prices (Dz.U. 2022 poz. 2776) sets the
+units, and the plugin follows it.
+
+## Data per variant
+
+| Field | Meaning |
+| --- | --- |
+| `net_quantity`, `net_unit` | The quantity on the package: `g`, `kg`, `ml`, `l`, `cm`, `m`, `m2`, `m3` or `piece`. |
+| `reference_unit` | `auto`, or an explicit unit: `kg`, `per_100g`, `l`, `per_100ml`, `m`, `m2`, `m3`, `piece`, `per_10_pieces`, `per_100_pieces`. |
+| `drained_quantity` | Drained net weight, for food in a liquid medium (par. 6). For glazed food, enter the net weight without the glaze as the quantity. |
+| `exempt_reason` | `none`, or one of the par. 7 exemptions: `same_as_price`, `sold_as_set`, `sold_in_pairs`, `medicinal_product`. |
+| `deposit_amount`, `deposit_currency_code` | Deposit of the deposit-return system for beverage packaging. |
+
+## How the unit price is computed
+
+`auto` picks the statutory unit for the dimension (par. 4 ust. 1): kilogram for
+mass, litre for volume, metre for length, square metre for area, cubic metre for
+volume in m³, and one piece for goods sold by the piece. The price is the live
+calculated price, rounded to grosz, half away from zero.
+
+| Variant | Price | Result |
+| --- | --- | --- |
+| 250 g | 10,00 zł | 40,00 zł / kg |
+| 250 g, reference `per_100g` | 10,00 zł | 4,00 zł / 100 g |
+| 400 g, drained 240 g | 6,00 zł | 25,00 zł / kg |
+| 50 pieces, reference `per_100_pieces` | 12,50 zł | 25,00 zł / 100 szt. |
+| 1 piece | 19,99 zł | 19,99 zł / szt., `same_as_price: true` |
+
+**100 g and 100 ml are a store choice.** The regulation has no threshold: par. 4
+ust. 2 allows decimal multiples and submultiples "in special cases justified by
+the kind, purpose or customary quantity" of the goods. Packs labelled with a
+number of pieces may use a price per piece or per 10 or 100 pieces (par. 4 ust. 3).
+
+`same_as_price: true` marks a unit price equal to the selling price, which par. 7
+pkt 1 exempts from display. The storefront may skip it.
+
+## Deposit (kaucja)
+
+Since 1 October 2025 a deposit is charged on beverages in packaging covered by the
+deposit-return system. No price display rule for it exists in the price act, the
+regulation or UOKiK guidance; the Ministry of Climate says the deposit is added at
+the checkout, and the VAT act leaves it out of the tax base. The plugin therefore
+treats it as a separate amount: it is returned next to the price, never included
+in it, never part of the unit price and never part of the Omnibus history. Show
+it as "+ 0,50 zł kaucji" and as its own line in the cart. Charging it at checkout
+(for example as a line item) is outside this plugin. The interpretation is listed
+among the open questions in [Legal basis](./legal.en.mdx).

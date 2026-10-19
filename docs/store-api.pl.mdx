@@ -1,0 +1,160 @@
+---
+title: Store API
+description: Wszystkie trasy Store API dodawane przez plugin, z parametrami i kształtem odpowiedzi.
+---
+
+Wszystkie trasy wymagają nagłówka z kluczem publikowalnym, jak każda trasa
+`/store`, i odpowiadają tylko dla opublikowanych produktów z kanałów sprzedaży tego
+klucza.
+
+Trasy odczytu dla strony produktu są pod `/store/products/:id/...`, więc
+wdrożenie, które publicznie wystawia tylko `GET /store/products*`, nie potrzebuje
+dla nich zmian w ingressie. Trasy odstąpienia to żądania `POST` pod
+`/store/consumer-compliance/` i muszą być osiągalne.
+
+## Zgodność produktu
+
+`GET /store/products/:id/compliance?region_id=reg_...&locale=pl`
+
+`region_id` (albo zamiast niego `currency_code`) wybiera kontekst cenowy.
+Odpowiedź:
+
+```json
+{
+  "product_id": "prod_01...",
+  "variants": [
+    {
+      "variant_id": "variant_01...",
+      "currency_code": "pln",
+      "tax_inclusive": true,
+      "omnibus": {
+        "status": "ok",
+        "current_amount": 80,
+        "original_amount": 100,
+        "is_reduced": true,
+        "reduction_started_at": "2026-10-10T08:00:00.000Z",
+        "reference_price": 100,
+        "reference_basis": "lowest_in_window",
+        "reference_label": "lowest_30_days",
+        "reference_label_text": "Najniższa cena z 30 dni przed obniżką",
+        "reduction_percent": 20,
+        "window_days": 30,
+        "window_start": "2026-09-09T22:00:00.000Z",
+        "window_end": "2026-10-09T22:00:00.000Z",
+        "offered_less_than_window": false,
+        "history_incomplete": false,
+        "reference_not_higher": false,
+        "lowest_price_in_window": 80,
+        "reason": null
+      },
+      "unit_price": { "amount": 47.06, "reference_unit": "l", "reference_label": "l", "based_on": "net_quantity", "same_as_price": false },
+      "deposit": { "amount": 0.5, "currency_code": "pln" }
+    }
+  ],
+  "safety": {
+    "applicable": true,
+    "manufacturer": { "name": "Producent sp. z o.o.", "trade_name": null, "postal_address": "ul. Prosta 1, Warszawa", "country_code": "pl", "email": "kontakt@producent.pl", "url": null },
+    "responsible_person": null,
+    "product_identifier": "Model X-1",
+    "variant_identifiers": [{ "variant_id": "variant_01...", "sku": "KETTLE-1", "barcode": null, "ean": "5901234123457", "upc": null }],
+    "warnings": "Nie zanurzać w wodzie.",
+    "safety_information": null,
+    "safety_document_urls": [],
+    "accessibility_notes": null
+  }
+}
+```
+
+`omnibus.status` ma wartość `no_price`, gdy wariant nie ma ceny w kontekście, i
+`exempt` dla produktów oznaczonych jako nieobjęte. `unit_price` i `deposit` są
+`null`, gdy nie zostały skonfigurowane. Znaczenie pól opisują strony
+[Omnibus](./omnibus.pl.mdx) i [Ceny jednostkowe](./unit-prices.pl.mdx).
+
+## Wiele wariantów naraz
+
+`GET /store/consumer-compliance/variants?ids=variant_1,variant_2&region_id=...`
+
+Do 100 identyfikatorów, dla stron list. Zwraca `{ "variants": [...] }` z takimi
+samymi obiektami wariantów jak wyżej. Identyfikatory niewidoczne dla klucza są
+pomijane.
+
+`GET /store/consumer-compliance/variants/:id/omnibus?region_id=...`
+
+Blok `omnibus` jednego wariantu.
+
+Obie trasy przyjmują `reduction_started_at=data ISO`, żeby policzyć obniżkę spoza
+cenników, na przykład kampanię z kodem rabatowym zaczętą w tym momencie.
+
+## Informacje
+
+`GET /store/consumer-compliance/disclosures?locale=pl`
+
+```json
+{
+  "reviews": { "enabled": true, "text": "Opinie mogą wystawiać wyłącznie osoby, które kupiły produkt..." },
+  "personalised_pricing": { "used": false, "text": null },
+  "withdrawal": {
+    "period_days": 14,
+    "labels": { "entry": "Odstąp od umowy tutaj", "confirm": "Potwierdź odstąpienie od umowy" },
+    "text": null
+  },
+  "omnibus_note": null
+}
+```
+
+## Odstąpienie
+
+Wszystkie trzy trasy przyjmują zalogowanego klienta (sesja lub token) i działają
+dla gości.
+
+`POST /store/consumer-compliance/withdrawals/lookup`
+
+```json
+{ "display_id": "1042", "email": "jan@example.com" }
+```
+
+Zalogowany klient może wysłać samo `{ "order_id": "order_..." }`. Zwraca
+zamówienie (`id`, `display_id`, `placed_at`, `canceled`) i `assessment`: dla
+każdej pozycji `eligible`, `excluded_reason`, `basis` (`delivery`,
+`contract_conclusion`, `awaiting_delivery`), `deadline_at`, `within_period`, a
+także `deadline_at` całego zamówienia. Niezgodność danych i nieznane zamówienie
+dają 404.
+
+`POST /store/consumer-compliance/withdrawals`
+
+```json
+{
+  "display_id": "1042",
+  "email": "jan@example.com",
+  "customer_name": "Jan Kowalski",
+  "contact_email": "jan@example.com",
+  "items": [{ "line_item_id": "ordli_...", "quantity": 1 }],
+  "statement": "optional, the default wording is used when omitted",
+  "reason": "optional, never required",
+  "locale": "pl"
+}
+```
+
+Bez `items` odstąpienie obejmuje wszystkie uprawnione pozycje. Odpowiedź `201` z
+`{ "withdrawal": {...}, "confirmation_token": "..." }`. Odstąpienie ma status
+`pending_confirmation` i nie jest jeszcze złożone. Błędy: pozycja wyłączona, ilość
+większa niż zamówiona, anulowane zamówienie albo (przy `rejectOutsidePeriod`)
+upływ terminu.
+
+`POST /store/consumer-compliance/withdrawals/:id/confirm`
+
+```json
+{ "token": "..." }
+```
+
+Składa oświadczenie: `status: "confirmed"`, ustawione `submitted_at`, wysłane
+potwierdzenie (`acknowledgement_sent_at`). Zły token, nieznany identyfikator i
+już potwierdzone żądanie dają 404. Wygasłe żądanie daje 400 i trzeba zacząć od
+nowa.
+
+`GET /store/consumer-compliance/withdrawals` (tylko zalogowany klient)
+
+Złożone odstąpienia klienta.
+
+Publiczny obiekt odstąpienia nigdy nie zawiera skrótu tokenu, szczegółów oceny ani
+notatek przedsiębiorcy.
