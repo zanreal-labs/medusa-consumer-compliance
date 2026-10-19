@@ -99,6 +99,46 @@ price list, such as a discount code campaign started at that moment.
 }
 ```
 
+## Checkout consents
+
+`GET /store/consumer-compliance/carts/:id/consents?locale=pl`
+
+```json
+{
+  "cart_id": "cart_01...",
+  "locale": "pl",
+  "can_complete": false,
+  "blocking": { "code": "consent_required", "keys": ["digital_immediate_delivery"] },
+  "consents": [
+    {
+      "key": "digital_immediate_delivery",
+      "version": 2,
+      "required": true,
+      "purpose": "digital_content_withdrawal_waiver",
+      "text": "Wyrażam zgodę na rozpoczęcie dostarczania treści cyfrowej (kodu) przed upływem terminu do odstąpienia od umowy. Przyjmuję do wiadomości, że po dostarczeniu treści cyfrowej utracę prawo odstąpienia od umowy.",
+      "link": null,
+      "line_item_ids": ["cali_01..."],
+      "status": "missing",
+      "accepted_version": null,
+      "accepted_at": null
+    }
+  ]
+}
+```
+
+`POST /store/consumer-compliance/carts/:id/consents`
+
+```json
+{ "locale": "pl", "acceptances": [{ "key": "digital_immediate_delivery", "version": 2 }] }
+```
+
+Records each acceptance with the exact text in that locale, the time, the client
+IP and user agent, and answers with the GET body. A key that does not apply to
+the cart is refused (400); a version other than the current one is refused with
+code `consent_version_outdated`. Then `POST /store/carts/:id/complete` succeeds;
+without the acceptances it fails with `consent_required` or
+`consent_version_outdated`. See [Checkout consents](./consents.en.mdx).
+
 ## Withdrawal
 
 All three routes accept a logged-in customer (session or bearer token) and work
@@ -117,7 +157,13 @@ order (`id`, `display_id`, `placed_at`, `canceled`) and `assessment`: per item
 `deadline_at`, `right_of_withdrawal` (`applies`, `excluded_digital_consent`,
 `none_eligible`), `legal_basis` (Polish and English text, set for
 `excluded_digital_consent`), `digital_consent_at` and `digital_consent_missing`
-(see the digital-only section of [Withdrawal](./withdrawal.en.mdx)). Mismatch and unknown order both give 404.
+(see the digital-only section of [Withdrawal](./withdrawal.en.mdx)). Each item also carries
+`legal_basis` when it is excluded as digital content supplied with consent.
+
+For an order from Allegro or another marketplace the lookup answers 200 with
+`assessment: null` and `external_marketplace_order: { code:
+"external_marketplace_order", marketplace: "allegro", matched_by, message }`:
+the marketplace's own process applies, and step one is refused with that code. Mismatch and unknown order both give 404.
 
 `POST /store/consumer-compliance/withdrawals`
 

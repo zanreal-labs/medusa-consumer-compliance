@@ -20,7 +20,10 @@ other side.
 | `withdrawal.*.mdx` | The online withdrawal function, deadlines, the model form. |
 | `disclosures.*.mdx` | Reviews and personalised pricing texts. |
 | `store-api.*.mdx` | Store API reference. |
-| `storefront.*.mdx` | How a storefront renders all of it, with snippets. |
+| `consents.*.mdx` | Checkout consents: definitions, rules, enforcement, order snapshots. |
+| `frontend-api.*.mdx` | API contract for frontend developers: endpoints, examples, error codes, checkout sequence. |
+
+The machine-readable contract is `openapi/consumer-compliance.openapi.json` at the repository root.
 | `options.*.mdx` | Plugin options and the admin API. |
 | `legal.*.mdx` | Compliance matrix, sources with dates, open questions. |
 | `meta.json`, `meta.pl.json` | Sidebar title, description and page order, per locale. |

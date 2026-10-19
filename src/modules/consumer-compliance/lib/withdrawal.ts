@@ -40,6 +40,13 @@ export interface WithdrawalOrderFacts {
   deliveries: (Date | null)[];
   /** Consent to immediate supply of digital content, with acknowledgement of losing the right (art. 38 ust. 1 pkt 13). */
   digital_consent_at: Date | null;
+  /**
+   * Products the consent covered, when known (consents recorded at checkout
+   * store them). Lines of these products are digital content whatever the
+   * product classification says. Null: the consent covers the lines already
+   * classified as digital content.
+   */
+  digital_consent_product_ids?: string[] | null;
   canceled: boolean;
 }
 
@@ -53,6 +60,8 @@ export interface ItemAssessment {
   exception: WithdrawalException;
   /** Why the item is excluded, when it is. */
   excluded_reason: WithdrawalException | null;
+  /** The provision, for an item excluded as digital content supplied with consent. */
+  legal_basis: { pl: string; en: string } | null;
   basis: PeriodBasis;
   /** Last moment to send the statement, ISO, or null while the period has not started. */
   deadline_at: string | null;
@@ -61,8 +70,8 @@ export interface ItemAssessment {
 
 /** Statutory basis of the digital content exception, returned with a "no right of withdrawal" answer. */
 export const DIGITAL_CONTENT_LEGAL_BASIS = {
-  en: "Art. 38 ust. 1 pkt 13 of the Polish Consumer Rights Act (ustawa o prawach konsumenta): no right of withdrawal from a contract for digital content not supplied on a tangible medium, where performance began with the consumer's express prior consent, after being informed of the loss of the right of withdrawal, and the trader provided the confirmation required by art. 15 ust. 1 and 2 or art. 21 ust. 1.",
-  pl: "Art. 38 ust. 1 pkt 13 ustawy o prawach konsumenta: prawo odstąpienia od umowy nie przysługuje w odniesieniu do umowy o dostarczanie treści cyfrowych niedostarczanych na nośniku materialnym, jeżeli spełnianie świadczenia rozpoczęło się za wyraźną i uprzednią zgodą konsumenta, który został poinformowany przed jego rozpoczęciem, że po spełnieniu świadczenia utraci prawo odstąpienia od umowy, i przyjął to do wiadomości, a przedsiębiorca przekazał konsumentowi potwierdzenie, o którym mowa w art. 15 ust. 1 i 2 albo art. 21 ust. 1.",
+  en: "Art. 38 ust. 1 pkt 13 of the Polish Consumer Rights Act (ustawa o prawach konsumenta, t.j. Dz.U. 2026 poz. 1244): the right of withdrawal does not apply to contracts for the supply of digital content not supplied on a tangible medium for which the consumer pays a price, if the trader began performance with the consumer's express and prior consent, the consumer was informed before performance began that they would lose the right of withdrawal once the trader had performed, and acknowledged this, and the trader provided the confirmation referred to in art. 15 ust. 1 and 2 or art. 21 ust. 1.",
+  pl: "Art. 38 ust. 1 pkt 13 ustawy o prawach konsumenta (t.j. Dz.U. 2026 poz. 1244): prawo odstąpienia od umowy zawartej na odległość nie przysługuje konsumentowi w odniesieniu do umów o dostarczanie treści cyfrowych niedostarczanych na nośniku materialnym, za które konsument jest zobowiązany do zapłaty ceny, jeżeli przedsiębiorca rozpoczął świadczenie za wyraźną i uprzednią zgodą konsumenta, który został poinformowany przed rozpoczęciem świadczenia, że po spełnieniu świadczenia przez przedsiębiorcę utraci prawo odstąpienia od umowy, i przyjął to do wiadomości, a przedsiębiorca przekazał konsumentowi potwierdzenie, o którym mowa w art. 15 ust. 1 i 2 albo art. 21 ust. 1.",
 } as const;
 
 /**
@@ -81,9 +90,11 @@ export interface OrderAssessment {
   right_of_withdrawal: RightOfWithdrawal;
   legal_basis: { pl: string; en: string } | null;
   /**
-   * Digital-only store, but the order carries no consent timestamp: the
-   * exception cannot apply, the ordinary 14-day right stands, and the admin
-   * register flags the withdrawal ("brak zgody na natychmiastowe dostarczenie").
+   * The order has digital content lines (digital-only store, or products
+   * classified as digital content) but no consent timestamp: the exception
+   * cannot apply, the ordinary 14-day right stands, and the admin register
+   * flags it ("brak zgody na natychmiastowe dostarczenie"). With mandatory
+   * checkout consents this only happens to orders created outside checkout.
    */
   digital_consent_missing: boolean;
   digital_consent_at: string | null;
@@ -133,9 +144,12 @@ export function assessWithdrawal(input: {
 }): OrderAssessment {
   const { facts, now, periodDays, extendOverNonWorkingDays } = input;
   const digitalOnly = input.digitalOnly === true;
-  const sourceItems = digitalOnly
-    ? input.items.map((item) => ({ ...item, exception: "digital_content" as const, requires_shipping: false }))
-    : input.items;
+  const covered = new Set(facts.digital_consent_product_ids ?? []);
+  const sourceItems = input.items.map((item) =>
+    digitalOnly || (item.product_id !== null && covered.has(item.product_id))
+      ? { ...item, exception: "digital_content" as const, requires_shipping: false }
+      : item,
+  );
   const goodsDeliveries = facts.deliveries;
   const allDelivered = goodsDeliveries.length > 0 && goodsDeliveries.every((date) => date !== null);
   const lastDelivery = allDelivered
@@ -163,6 +177,7 @@ export function assessWithdrawal(input: {
       eligible: !excluded && !facts.canceled,
       exception: item.exception,
       excluded_reason: excluded ? item.exception : null,
+      legal_basis: excluded && item.exception === "digital_content" ? { ...DIGITAL_CONTENT_LEGAL_BASIS } : null,
       line_item_id: item.line_item_id,
       quantity: item.quantity,
       title: item.title,
@@ -181,7 +196,8 @@ export function assessWithdrawal(input: {
   const right: RightOfWithdrawal = eligible.length > 0 ? "applies" : consentExclusion ? "excluded_digital_consent" : "none_eligible";
   return {
     digital_consent_at: facts.digital_consent_at?.toISOString() ?? null,
-    digital_consent_missing: digitalOnly && facts.digital_consent_at === null,
+    digital_consent_missing:
+      facts.digital_consent_at === null && (digitalOnly || items.some((item) => item.exception === "digital_content")),
     legal_basis: right === "excluded_digital_consent" ? { ...DIGITAL_CONTENT_LEGAL_BASIS } : null,
     right_of_withdrawal: right,
     any_eligible: eligible.length > 0,

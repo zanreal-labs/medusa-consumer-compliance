@@ -188,7 +188,8 @@
         "disclosures": "Informacje",
         "operators": "Producenci",
         "gpsr": "Braki GPSR",
-        "history": "Historia cen"
+        "history": "Historia cen",
+        "consents": "Zgody przy zamówieniu"
       },
       "reviewsEnabled": "Sklep publikuje opinie klientów",
       "reviews": "Jak weryfikujemy opinie",
@@ -288,6 +289,60 @@
       "processed": "Obsłużone",
       "rejected": "Odrzucone",
       "expired": "Wygasłe"
+    },
+    "consents": {
+      "description": "Zgody, które klient wyraża przy zamówieniu, pokazywane gdy ich reguły pasują do koszyka. Zgody wymagane blokują złożenie zamówienia, dopóki nie zostaną zaakceptowane w bieżącej wersji. Zmiana treści lub odnośnika tworzy nową wersję; poprzednie wersje i każda zapisana akceptacja zostają.",
+      "key": "Klucz",
+      "version": "Wersja",
+      "status": "Status",
+      "rules": "Reguły",
+      "purpose": "Cel",
+      "required": "Wymagana",
+      "active": "Aktywna",
+      "inactive": "Nieaktywna",
+      "noRules": "Brak reguł: nigdy nie jest pokazywana",
+      "label": "Treść pokazywana klientowi",
+      "labelHint": "Dokładnie te słowa, które klient widzi i akceptuje.",
+      "linkUrl": "Powiązany dokument (URL)",
+      "linkLabel": "Tekst odnośnika",
+      "rulesHint": "Zgoda dotyczy koszyka, gdy którakolwiek reguła pasuje do produktu w koszyku.",
+      "ruleType": "Rodzaj reguły",
+      "flagKey": "Klucz metadanych produktu",
+      "ruleValues": "Identyfikatory",
+      "ruleValuesHint": "Identyfikatory, po przecinku",
+      "addRule": "Dodaj regułę",
+      "add": "Dodaj zgodę",
+      "saved": "Zapisano zgodę",
+      "saveError": "Nie udało się zapisać zgody",
+      "deleted": "Usunięto zgodę",
+      "deleteError": "Nie udało się usunąć zgody",
+      "versionNote": "Bieżąca wersja {{version}}. Zmiana treści lub odnośnika utworzy kolejną wersję.",
+      "history": "Historia wersji",
+      "versionLabel": "Wersja {{version}}"
+    },
+    "consentPurposes": {
+      "generic": "Ogólna",
+      "digital_content_withdrawal_waiver": "Treści cyfrowe: utrata prawa odstąpienia"
+    },
+    "consentRuleTypes": {
+      "always": "Zawsze",
+      "product_flag": "Flaga produktu",
+      "product": "Produkty",
+      "product_type": "Typy produktów",
+      "product_tag": "Tagi produktów",
+      "collection": "Kolekcje",
+      "category": "Kategorie"
+    },
+    "orderConsents": {
+      "heading": "Zgody klienta",
+      "allegro": "Zgody zbierane przez Allegro.",
+      "external": "Zgody zbierane przez zewnętrzny serwis sprzedaży.",
+      "none": "Dla tego zamówienia nie zapisano zgód.",
+      "version": "wersja {{version}}",
+      "required": "wymagana",
+      "acceptedAt": "Zaakceptowano",
+      "document": "Dokument",
+      "userAgent": "Przeglądarka"
     }
   }
 }

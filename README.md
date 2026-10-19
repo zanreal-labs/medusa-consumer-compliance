@@ -36,6 +36,17 @@ The legal basis of every rule, with sources and dates, is in
   art. 111 and 115 of the Civil Code, Polish holidays, statutory exceptions), the
   acknowledgement on a durable medium through the notification module, and an
   admin register.
+- **Checkout consents.** Consents chosen by the cart contents (product flag,
+  type, tag, collection, category, product, or always), with versioned PL/EN text.
+  Required ones block `POST /store/carts/:id/complete` server-side
+  (`consent_required`, `consent_version_outdated`); accepted ones are frozen
+  verbatim onto the order (text, locale, version, linked document hash, time, IP,
+  user agent) in an immutable table, shown in the admin and exportable. The
+  seeded `digital_immediate_delivery` consent lifts the right of withdrawal for
+  the digital lines it covered (art. 38 ust. 1 pkt 13).
+- **Allegro-safe.** Marketplace orders (`metadata.allegro_checkout_form_id` or an
+  excluded sales channel) are never checked, written to or offered our withdrawal
+  flow; every subscriber is fail-safe.
 - **Disclosures.** Localised texts for review verification and personalised
   pricing, served by the Store API.
 - **Admin** in Polish and English: product widgets (compliance, price history with
@@ -76,13 +87,17 @@ See [`docs/options.en.mdx`](./docs/options.en.mdx).
 | `GET /store/consumer-compliance/variants?ids=` | The same for up to 100 variants (listings). |
 | `GET /store/consumer-compliance/variants/:id/omnibus` | One variant's Omnibus block. |
 | `GET /store/consumer-compliance/disclosures` | Review and personalised pricing texts, withdrawal labels. |
+| `GET /store/consumer-compliance/carts/:id/consents` | Consents that apply to the cart, verbatim text, version, status. |
+| `POST /store/consumer-compliance/carts/:id/consents` | Record acceptances (then `POST /store/carts/:id/complete`). |
 | `POST /store/consumer-compliance/withdrawals/lookup` | Eligible items and deadlines for an order. |
 | `POST /store/consumer-compliance/withdrawals` | Step one: the statement. |
 | `POST /store/consumer-compliance/withdrawals/:id/confirm` | Step two: submission and acknowledgement. |
 | `GET /store/consumer-compliance/withdrawals` | A logged-in customer's withdrawals. |
 
-Reference: [`docs/store-api.en.mdx`](./docs/store-api.en.mdx). Storefront snippets:
-[`docs/storefront.en.mdx`](./docs/storefront.en.mdx).
+The plugin is headless and ships no frontend code. Contract for frontend developers:
+[`docs/frontend-api.en.mdx`](./docs/frontend-api.en.mdx) and the OpenAPI file
+[`openapi/consumer-compliance.openapi.json`](./openapi/consumer-compliance.openapi.json).
+Full examples: [`docs/store-api.en.mdx`](./docs/store-api.en.mdx).
 
 ## Development
 

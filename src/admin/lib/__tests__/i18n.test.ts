@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import { GPSR_ISSUES } from "../../../modules/consumer-compliance/lib/gpsr";
 import { UNIT_PRICE_ISSUES } from "../../../modules/consumer-compliance/lib/unit-price";
 import {
+  CONSENT_PURPOSES,
+  CONSENT_RULE_TYPES,
   OMNIBUS_MODES,
   OPERATOR_ROLES,
   QUANTITY_UNITS,
@@ -26,6 +28,8 @@ import pl from "../../i18n/json/pl.json";
 const ADMIN_DIR = join(__dirname, "../..");
 
 const DYNAMIC: Record<string, readonly string[]> = {
+  "consumerCompliance.consentPurposes": CONSENT_PURPOSES,
+  "consumerCompliance.consentRuleTypes": CONSENT_RULE_TYPES,
   "consumerCompliance.gpsr.issues": GPSR_ISSUES,
   "consumerCompliance.gradualModes": ["per_change", "keep_first"],
   "consumerCompliance.locales": ["pl", "en"],

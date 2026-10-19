@@ -1,5 +1,5 @@
 {
   "title": "Consumer Compliance",
   "description": "@zanreal/medusa-consumer-compliance supports the EU and Polish consumer-protection duties of an online shop on Medusa v2: Omnibus price history, unit prices, GPSR product safety data, the online withdrawal function and the reviews and personalised pricing disclosures.",
-  "pages": ["index", "omnibus", "unit-prices", "product-safety", "withdrawal", "disclosures", "store-api", "storefront", "options", "legal"]
+  "pages": ["index", "omnibus", "unit-prices", "product-safety", "withdrawal", "disclosures", "consents", "store-api", "frontend-api", "options", "legal"]
 }

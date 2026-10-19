@@ -2,6 +2,7 @@ import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { CONSUMER_COMPLIANCE_MODULE } from "../modules/consumer-compliance";
 import type ConsumerComplianceModuleService from "../modules/consumer-compliance/service";
 import { readIds } from "./lib/events";
+import { failSafe } from "./lib/fail-safe";
 
 /**
  * Drop the per-product and per-variant data of a deleted product. Soft
@@ -14,6 +15,7 @@ export default async function consumerComplianceProductDeletedHandler({
   container,
   event,
 }: SubscriberArgs<unknown>): Promise<void> {
+  await failSafe(container, "product cleanup", async () => {
   const productIds = readIds(event.data);
   if (productIds.length === 0) {
     return;
@@ -27,6 +29,7 @@ export default async function consumerComplianceProductDeletedHandler({
   if (unitPricing.length > 0) {
     await service.softDeleteVariantUnitPricings(unitPricing.map((row) => row.id));
   }
+  });
 }
 
 export const config: SubscriberConfig = {

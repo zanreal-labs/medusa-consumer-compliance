@@ -14,7 +14,7 @@ stores the current price, not the prices of last month. This plugin keeps it.
 One row per price a customer could see, per **variant** and **pricing context**,
 with `valid_from` and `valid_to`. A context is a currency and, by default, a
 region: the plugin asks the pricing module for the calculated price exactly as a
-storefront in that region would, so price lists, region rules and their schedules
+frontend in that region would, so price lists, region rules and their schedules
 are all applied. No customer group is passed, on purpose: the history is about
 the price offered to the public.
 
@@ -38,8 +38,8 @@ They also run under a lock.
 For the current price of a variant, the plugin decides:
 
 1. **Is it an announced reduction?** By default, when the calculated price comes
-   from a price list of type `sale` and is lower than the regular price (what the
-   stock storefront shows as a struck-through price). With
+   from a price list of type `sale` and is lower than the regular price (Medusa's
+   `calculated_amount` below `original_amount` on a sale list). With
    `reductionDetection: "lower_than_original"`, any price below the regular price
    counts. Price lists in `ignoredPriceListIds` never count.
 2. **When did it start?** The `valid_from` of the current price, extended back over
@@ -128,9 +128,9 @@ Which promotions are in scope is a policy question; see the open questions in
 - **Tax.** The recorded amount is Medusa's calculated amount. For a currency whose
   prices include tax (PLN in most Polish setups) it is the gross price, which is
   what the law asks for. For tax-exclusive currencies the response says
-  `tax_inclusive: false`, and the storefront must apply the same tax it applies to
+  `tax_inclusive: false`, and the frontend must apply the same tax it applies to
   the displayed price.
-- **Customer groups and personalised prices** are not recorded. A storefront that
+- **Customer groups and personalised prices** are not recorded. A frontend that
   shows a group price as a reduction must handle that case separately.
 - **Retention** defaults to 400 days and never goes below the window plus one day.
   Rows still needed by a running reduction are kept regardless.

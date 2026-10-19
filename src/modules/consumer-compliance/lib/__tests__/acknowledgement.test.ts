@@ -43,3 +43,21 @@ describe("renderAcknowledgement", () => {
     }
   });
 });
+
+describe("renderAcknowledgement: order consents", () => {
+  it("quotes the consents frozen onto the order, verbatim, with version and time", () => {
+    const text = "Wyrażam zgodę na rozpoczęcie dostarczania treści cyfrowej (kodu) przed upływem terminu do odstąpienia od umowy.";
+    const result = renderAcknowledgement({
+      ...input,
+      consents: [{ accepted_at: new Date("2026-10-19T10:00:00Z"), locale: "pl", text, version: 3 }],
+    });
+    expect(result.text).toContain("Zgody udzielone przy tym zamówieniu");
+    expect(result.text).toContain(`"${text}"`);
+    expect(result.text).toContain("wersja 3");
+    expect(result.html).toContain("&bdquo;");
+  });
+
+  it("omits the section when the order has no consents", () => {
+    expect(renderAcknowledgement(input).text).not.toContain("Zgody udzielone");
+  });
+});

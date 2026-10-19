@@ -33,7 +33,7 @@ export type GradualReductionMode = "keep_first" | "per_change";
  *
  * - `sale_price_list` (default): the calculated price comes from a Medusa price
  *   list of type `sale` and is lower than the regular (original) price. This is
- *   what the stock storefront renders as a struck-through price.
+ *   Medusa's calculated amount below the original amount on a sale list.
  * - `lower_than_original`: any calculated price lower than the original price,
  *   including an `override` price list that undercuts the base price.
  */
@@ -103,6 +103,14 @@ export interface ConsumerComplianceModuleOptions {
   };
   /** Locale used when a localised text has no entry for the requested locale. Default "pl". */
   defaultLocale?: string;
+  /**
+   * Orders from external marketplaces are left entirely to the marketplace's
+   * own consent and withdrawal process. An order counts as external when its
+   * metadata carries one of `externalOrderMetadataKeys` (default
+   * `allegro_checkout_form_id`) or its sales channel is listed here.
+   */
+  externalSalesChannelIds?: string[];
+  externalOrderMetadataKeys?: string[];
 }
 
 export interface ResolvedConsumerComplianceOptions {
@@ -127,6 +135,8 @@ export interface ResolvedConsumerComplianceOptions {
     seller: { name: string; address: string; email: string };
   };
   defaultLocale: string;
+  externalSalesChannelIds: string[];
+  externalOrderMetadataKeys: string[];
 }
 
 function positiveInt(value: unknown, fallback: number): number {
@@ -141,6 +151,10 @@ export function resolveOptions(options?: ConsumerComplianceModuleOptions | null)
 
   return {
     defaultLocale: (options?.defaultLocale ?? "pl").trim().toLowerCase() || "pl",
+    externalOrderMetadataKeys: [
+      ...new Set([...(options?.externalOrderMetadataKeys ?? []), "allegro_checkout_form_id"].map((key) => key.trim()).filter(Boolean)),
+    ],
+    externalSalesChannelIds: [...new Set((options?.externalSalesChannelIds ?? []).map((id) => id.trim()).filter(Boolean))],
     omnibus: {
       gradualReductions: omnibus.gradualReductions === "keep_first" ? "keep_first" : "per_change",
       ignoredPriceListIds: [...new Set(omnibus.ignoredPriceListIds ?? [])],
@@ -227,3 +241,14 @@ export type OperatorRole = (typeof OPERATOR_ROLES)[number];
 
 export const WITHDRAWAL_STATUSES = ["pending_confirmation", "confirmed", "processed", "rejected", "expired"] as const;
 export type WithdrawalStatus = (typeof WITHDRAWAL_STATUSES)[number];
+
+export const CONSENT_PURPOSES = ["generic", "digital_content_withdrawal_waiver"] as const;
+export type ConsentPurpose = (typeof CONSENT_PURPOSES)[number];
+
+export const CONSENT_RULE_TYPES = ["always", "product_type", "product_tag", "collection", "category", "product", "product_flag"] as const;
+export type ConsentRuleType = (typeof CONSENT_RULE_TYPES)[number];
+
+/** Key of the seeded digital content consent. */
+export const DIGITAL_CONSENT_KEY = "digital_immediate_delivery";
+/** Product metadata flag the seeded digital consent matches on. */
+export const DIGITAL_PRODUCT_FLAG = "is_digital_content";

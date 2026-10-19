@@ -75,7 +75,8 @@ export async function resolveOwnedOrder(
 
 export interface AssessOrderOutput {
   order: LoadedOrder;
-  assessment: OrderAssessment;
+  /** Null for a marketplace order, which follows the marketplace's own process. */
+  assessment: OrderAssessment | null;
 }
 
 export const assessWithdrawalOrderStep = createStep(
@@ -84,6 +85,9 @@ export const assessWithdrawalOrderStep = createStep(
     const service = container.resolve<ConsumerComplianceModuleService>(CONSUMER_COMPLIANCE_MODULE);
     const options = service.resolvedOptions.withdrawal;
     const order = await resolveOwnedOrder(container, input);
+    if (order.external) {
+      return new StepResponse<AssessOrderOutput>({ assessment: null, order });
+    }
     const assessment = assessWithdrawal({
       digitalOnly: options.digitalOnly,
       extendOverNonWorkingDays: options.extendOverNonWorkingDays,
@@ -98,7 +102,7 @@ export const assessWithdrawalOrderStep = createStep(
 
 export interface CreateWithdrawalInput {
   order: LoadedOrder;
-  assessment: OrderAssessment;
+  assessment: OrderAssessment | null;
   customer_name: string;
   email: string;
   locale?: string | null;
@@ -112,7 +116,15 @@ export const createWithdrawalStep = createStep(
   async (input: CreateWithdrawalInput, { container }) => {
     const service = container.resolve<ConsumerComplianceModuleService>(CONSUMER_COMPLIANCE_MODULE);
     const options = service.resolvedOptions.withdrawal;
-    const { assessment, order } = input;
+    const { order } = input;
+    if (order.external || !input.assessment) {
+      throw new MedusaError(
+        MedusaError.Types.NOT_ALLOWED,
+        "This order was placed on an external marketplace. Withdrawal follows the marketplace's own process.",
+        "external_marketplace_order",
+      );
+    }
+    const assessment = input.assessment;
     const byId = new Map(assessment.items.map((item) => [item.line_item_id, item]));
 
     if (order.facts.canceled) {
@@ -249,7 +261,19 @@ export const sendWithdrawalAcknowledgementStep = createStep(
     const logger = container.resolve<Logger>(ContainerRegistrationKeys.LOGGER);
     const options = service.resolvedOptions.withdrawal;
     const row = input.withdrawal;
+    const orderConsents = (await service.listOrderConsents({ order_id: row.order_id }, { order: { accepted_at: "ASC" }, take: null })) as unknown as {
+      text: string;
+      version: number;
+      accepted_at: string | Date;
+      locale: string | null;
+    }[];
     const content = renderAcknowledgement({
+      consents: orderConsents.map((consent) => ({
+        accepted_at: new Date(consent.accepted_at),
+        locale: consent.locale,
+        text: consent.text,
+        version: Number(consent.version),
+      })),
       customer_name: row.customer_name,
       email: row.email,
       items: row.items,

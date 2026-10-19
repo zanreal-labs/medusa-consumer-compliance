@@ -1,6 +1,6 @@
 ---
 title: Legal basis and compliance matrix
-description: Which consumer-protection duties apply to a Polish B2C online shop, what this plugin does about each, what the storefront must do, what stays with the owner, and the official sources with dates.
+description: Which consumer-protection duties apply to a Polish B2C online shop, what this plugin does about each, what the frontend must do, what stays with the owner, and the official sources with dates.
 ---
 
 > **Disclaimer.** This page summarises research done on 19 October 2026 against
@@ -81,10 +81,18 @@ przykład pocztą elektroniczną), w tym jego treść oraz datę i godzinę zło
   the consumer's express consent and acknowledgement; orders without it keep the
   14-day right. The checkout that sells the codes must capture the consent;
   Allegro orders follow Allegro's process.
+- **The digital consent is mandatory on our checkout**, like on Allegro: required
+  checkout consents chosen by the cart contents, enforced server-side, with the
+  accepted text frozen on the order. The default text is consent plus
+  acknowledgement as art. 38 ust. 1 pkt 13 requires; the order confirmation
+  e-mail should quote it to meet the durable-medium confirmation of art. 21
+  ust. 1.
+- **Allegro orders are left to Allegro** entirely: no consent check, snapshot or
+  withdrawal flow in the plugin.
 
 ## Compliance matrix
 
-| Obligation | Applies to a PL B2C e-shop? | What this plugin does | What the storefront must do | Manual or legal |
+| Obligation | Applies to a PL B2C e-shop? | What this plugin does | What the frontend must do | Manual or legal |
 | --- | --- | --- | --- | --- |
 | 30-day lowest price on announced reductions (art. 4 ust. 2) | Yes, goods and services | Price history per variant and context; reference price, label and percentage via Store API | Show it next to every reduced price, wherever the reduction is communicated, cart included; percentage against it | Retention policy; review of edge cases |
 | Product on offer under 30 days (art. 4 ust. 3) | Yes | Introduction date from creation and history, reset after a break over 30 days; label "Najniższa cena od wprowadzenia towaru" | Use the returned label | Relaunch edge cases |

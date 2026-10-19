@@ -102,6 +102,28 @@ cenników, na przykład kampanię z kodem rabatowym zaczętą w tym momencie.
 }
 ```
 
+## Zgody przy zamówieniu
+
+`GET /store/consumer-compliance/carts/:id/consents?locale=pl` zwraca `cart_id`,
+`locale`, `can_complete`, `blocking` (`null` albo `{ code, keys }`) i
+`consents[]`: `key`, `version`, `required`, `purpose`, `text` (treść do
+wyświetlenia dosłownie), `link`, `line_item_ids`, `status` (`missing`,
+`outdated`, `accepted`), `accepted_version`, `accepted_at`. Przykład całego ciała
+jest w wersji angielskiej i w pliku OpenAPI.
+
+`POST /store/consumer-compliance/carts/:id/consents`
+
+```json
+{ "locale": "pl", "acceptances": [{ "key": "digital_immediate_delivery", "version": 2 }] }
+```
+
+Zapisuje każdą akceptację z dokładną treścią w tym języku, chwilą, IP i
+przeglądarką klienta, i odpowiada tym samym ciałem co GET. Klucz, który nie
+dotyczy koszyka, jest odrzucany (400); wersja inna niż bieżąca jest odrzucana z
+kodem `consent_version_outdated`. Wtedy `POST /store/carts/:id/complete` się
+udaje; bez akceptacji kończy się błędem `consent_required` albo
+`consent_version_outdated`. Zob. [Zgody przy zamówieniu](./consents.pl.mdx).
+
 ## Odstąpienie
 
 Wszystkie trzy trasy przyjmują zalogowanego klienta (sesja lub token) i działają
@@ -121,7 +143,11 @@ także `deadline_at` całego zamówienia, `right_of_withdrawal` (`applies`,
 `excluded_digital_consent`, `none_eligible`), `legal_basis` (treść po polsku i
 angielsku, przy `excluded_digital_consent`), `digital_consent_at` i
 `digital_consent_missing` (zob. sekcję o treściach cyfrowych w
-[Odstąpieniu](./withdrawal.pl.mdx)). Niezgodność danych i nieznane zamówienie
+[Odstąpieniu](./withdrawal.pl.mdx)). Każda pozycja ma też `legal_basis`, gdy jest
+wyłączona jako treść cyfrowa dostarczona za zgodą. Dla zamówienia z Allegro lub
+innego serwisu wyszukiwanie odpowiada 200 z `assessment: null` i
+`external_marketplace_order` (kod `external_marketplace_order`): obowiązuje proces
+serwisu, a etap pierwszy jest odrzucany z tym kodem. Niezgodność danych i nieznane zamówienie
 dają 404.
 
 `POST /store/consumer-compliance/withdrawals`

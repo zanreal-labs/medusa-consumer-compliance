@@ -1,0 +1,106 @@
+---
+title: Frontend API contract
+description: The contract for our own headless frontends - endpoints, the checkout sequence with consents, response shapes, machine-readable error codes - with an OpenAPI file in the repository.
+---
+
+The plugin ships no frontend code. Every frontend talks to Medusa's Store API,
+and everything it needs from this plugin is in the routes below. The
+machine-readable contract is
+[`openapi/consumer-compliance.openapi.json`](https://github.com/zanreal-labs/medusa-consumer-compliance/blob/main/openapi/consumer-compliance.openapi.json);
+[Store API](./store-api.en.mdx) has full examples of every body.
+
+Every request carries the publishable key header `x-publishable-api-key`, like
+any `/store` route. Field names and codes listed here are stable; new fields may
+be added.
+
+## Endpoints
+
+| Method and path | Use |
+| --- | --- |
+| `GET /store/products/:id/compliance?region_id=&locale=` | Product page: Omnibus reference price and label, unit price, deposit per variant; product safety (GPSR) block. |
+| `GET /store/consumer-compliance/variants?ids=&region_id=&locale=` | Listings: the same per variant, up to 100 ids. |
+| `GET /store/consumer-compliance/variants/:id/omnibus?region_id=` | One variant's Omnibus block. |
+| `GET /store/consumer-compliance/disclosures?locale=` | Reviews and personalised pricing texts, withdrawal button labels. |
+| `GET /store/consumer-compliance/carts/:id/consents?locale=` | Consents that apply to the cart, with the text to render. |
+| `POST /store/consumer-compliance/carts/:id/consents` | Record the customer's acceptances. |
+| `POST /store/carts/:id/complete` | Medusa's own completion; the plugin blocks it when a required consent is missing. |
+| `POST /store/consumer-compliance/withdrawals/lookup` | Items of an order that can be withdrawn from, and until when. |
+| `POST /store/consumer-compliance/withdrawals` | Withdrawal step one: the statement. |
+| `POST /store/consumer-compliance/withdrawals/:id/confirm` | Withdrawal step two: submission. |
+| `GET /store/consumer-compliance/withdrawals` | A logged-in customer's withdrawals. |
+
+## Checkout sequence
+
+```text
+1. GET  /store/consumer-compliance/carts/{cart_id}/consents?locale=pl
+        -> consents[]: key, version, required, text, link, status
+2. render each consent as an unticked checkbox with `text` verbatim
+   (and `link` if present); required ones must be ticked to continue
+3. POST /store/consumer-compliance/carts/{cart_id}/consents
+        { "locale": "pl", "acceptances": [{ "key": "...", "version": 1 }] }
+        -> same body as step 1, can_complete: true
+4. POST /store/carts/{cart_id}/complete
+        -> 200 { type: "order", order } | 400 { code: "consent_required" | "consent_version_outdated", message }
+```
+
+Call step 1 again after the cart changes: adding a licence key to the cart makes
+the digital consent apply. Send back the `version` you rendered; a version the
+customer did not see is refused.
+
+### Consents response
+
+```json
+{
+  "cart_id": "cart_01...",
+  "locale": "pl",
+  "can_complete": false,
+  "blocking": { "code": "consent_required", "keys": ["digital_immediate_delivery"] },
+  "consents": [
+    {
+      "key": "digital_immediate_delivery",
+      "version": 2,
+      "required": true,
+      "purpose": "digital_content_withdrawal_waiver",
+      "text": "Wyrażam zgodę na rozpoczęcie dostarczania treści cyfrowej (kodu) przed upływem terminu do odstąpienia od umowy. Przyjmuję do wiadomości, że po dostarczeniu treści cyfrowej utracę prawo odstąpienia od umowy.",
+      "link": null,
+      "line_item_ids": ["cali_01..."],
+      "status": "missing",
+      "accepted_version": null,
+      "accepted_at": null
+    }
+  ]
+}
+```
+
+`status` is `missing`, `outdated` or `accepted`. `line_item_ids` are the cart
+lines the consent covers (all lines for an `always` consent). `blocking` is
+`null` when the cart can be completed; otherwise it lists the keys to fix, with
+the same code completion would fail with.
+
+## Error codes
+
+Errors use Medusa's body: `{ "type": "...", "code": "...", "message": "..." }`.
+
+| Code | HTTP | Where | Meaning |
+| --- | --- | --- | --- |
+| `consent_required` | 400 | cart completion | A required consent is missing. `message` ends with the keys, comma separated; `GET .../consents` returns them in `blocking.keys`. |
+| `consent_version_outdated` | 400 | cart completion, posting acceptances | The consent changed after it was accepted, or the posted version is not the current one. Render the new text and accept again. |
+| `external_marketplace_order` | 400 | withdrawal step one | The order came from Allegro or another marketplace; its process applies. The lookup answers 200 with `external_marketplace_order` set instead. |
+| none, `type: "not_found"` | 404 | withdrawal lookup and confirm | Unknown order, wrong e-mail, wrong token: deliberately the same answer. |
+| none, `type: "not_allowed"` | 400 | withdrawal step one | No item can be withdrawn from; `message` gives the reason and, for digital content, the legal basis. |
+
+## Rendering rules worth enforcing
+
+- **Omnibus**: show `omnibus.reference_label_text` and `omnibus.reference_price`
+  next to every reduced price, wherever the reduction is communicated, the cart
+  included; compute any percentage from the reference price
+  (`omnibus.reduction_percent`). Do not present a price as reduced when
+  `reference_not_higher` is true or `reason` is `no_prior_price`.
+- **Unit price**: `unit_price.amount` per `unit_price.reference_label`, skipped
+  when `same_as_price`. Deposit: "+ amount zł kaucji", separate from the price.
+- **Product safety**: the `safety` block on the product page, in the offer itself.
+- **Withdrawal**: the entry button uses `withdrawal.labels.entry`, the final one
+  `withdrawal.labels.confirm`, from the disclosures endpoint, verbatim. One page,
+  no redirects, item selection, editable pre-filled name and e-mail.
+- **Consents**: unticked by default, text verbatim, required ones enforced by the
+  server anyway.

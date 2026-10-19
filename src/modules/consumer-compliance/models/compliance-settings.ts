@@ -17,6 +17,8 @@ const ComplianceSettings = model.define("consumer_compliance_settings", {
   withdrawal_info: model.json().nullable(),
   /** Text shown with a reduced price, optional, for example a note about the reference price basis. */
   omnibus_note: model.json().nullable(),
+  /** The default consents were created once; deleting them later is respected. */
+  consents_seeded: model.boolean().default(false),
 });
 
 export default ComplianceSettings;
