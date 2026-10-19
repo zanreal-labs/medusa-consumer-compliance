@@ -1,0 +1,80 @@
+---
+title: Kontrakt API dla frontu
+description: Kontrakt dla naszych frontów headless - trasy, kolejność kroków przy zamówieniu ze zgodami, kształt odpowiedzi, kody błędów - z plikiem OpenAPI w repozytorium.
+---
+
+Plugin nie zawiera kodu frontu. Każdy front rozmawia ze Store API Medusy, a
+wszystko, czego potrzebuje od tego pluginu, dają trasy poniżej. Kontrakt w formie
+maszynowej to
+[`openapi/consumer-compliance.openapi.json`](https://github.com/zanreal-labs/medusa-consumer-compliance/blob/main/openapi/consumer-compliance.openapi.json);
+pełne przykłady wszystkich ciał żądań i odpowiedzi są w [Store API](./store-api.pl.mdx).
+
+Każde żądanie ma nagłówek klucza publikowalnego `x-publishable-api-key`, jak
+każda trasa `/store`. Wymienione nazwy pól i kody są stałe; mogą dochodzić nowe
+pola.
+
+## Trasy
+
+| Metoda i ścieżka | Do czego |
+| --- | --- |
+| `GET /store/products/:id/compliance?region_id=&locale=` | Strona produktu: cena odniesienia Omnibus z etykietą, cena jednostkowa, kaucja dla wariantów; blok bezpieczeństwa (GPSR). |
+| `GET /store/consumer-compliance/variants?ids=&region_id=&locale=` | Listy: to samo dla wariantów, do 100 identyfikatorów. |
+| `GET /store/consumer-compliance/variants/:id/omnibus?region_id=` | Blok Omnibus jednego wariantu. |
+| `GET /store/consumer-compliance/disclosures?locale=` | Teksty o opiniach i personalizacji cen, etykiety przycisków odstąpienia. |
+| `GET /store/consumer-compliance/carts/:id/consents?locale=` | Zgody dotyczące koszyka, z treścią do wyświetlenia. |
+| `POST /store/consumer-compliance/carts/:id/consents` | Zapis akceptacji klienta. |
+| `POST /store/carts/:id/complete` | Finalizacja Medusy; plugin ją blokuje, gdy brakuje wymaganej zgody. |
+| `POST /store/consumer-compliance/withdrawals/lookup` | Pozycje zamówienia, od których można odstąpić, i do kiedy. |
+| `POST /store/consumer-compliance/withdrawals` | Etap pierwszy odstąpienia: oświadczenie. |
+| `POST /store/consumer-compliance/withdrawals/:id/confirm` | Etap drugi: złożenie oświadczenia. |
+| `GET /store/consumer-compliance/withdrawals` | Odstąpienia zalogowanego klienta. |
+
+## Kolejność przy zamówieniu
+
+```text
+1. GET  /store/consumer-compliance/carts/{cart_id}/consents?locale=pl
+        -> consents[]: key, version, required, text, link, status
+2. każdą zgodę pokaż jako niezaznaczone pole z `text` dosłownie
+   (i `link`, jeśli jest); wymagane muszą być zaznaczone, żeby przejść dalej
+3. POST /store/consumer-compliance/carts/{cart_id}/consents
+        { "locale": "pl", "acceptances": [{ "key": "...", "version": 1 }] }
+        -> to samo ciało co w kroku 1, can_complete: true
+4. POST /store/carts/{cart_id}/complete
+        -> 200 { type: "order", order } | 400 { code: "consent_required" | "consent_version_outdated", message }
+```
+
+Po każdej zmianie koszyka wywołaj krok 1 ponownie: dodanie klucza licencyjnego
+sprawia, że zgoda na treści cyfrowe zaczyna obowiązywać. Odeślij tę `version`,
+którą pokazałeś; wersja, której klient nie widział, jest odrzucana.
+
+Kształt odpowiedzi ze zgodami (pola `can_complete`, `blocking`, `consents[]` ze
+`status` równym `missing`, `outdated` lub `accepted`, `line_item_ids`) pokazuje
+przykład w [Store API](./store-api.pl.mdx).
+
+## Kody błędów
+
+Błędy mają postać Medusy: `{ "type": "...", "code": "...", "message": "..." }`.
+
+| Kod | HTTP | Gdzie | Znaczenie |
+| --- | --- | --- | --- |
+| `consent_required` | 400 | finalizacja koszyka | Brakuje wymaganej zgody. `message` kończy się kluczami po przecinku; `GET .../consents` zwraca je w `blocking.keys`. |
+| `consent_version_outdated` | 400 | finalizacja koszyka, zapis akceptacji | Zgoda zmieniła się po akceptacji albo wysłana wersja nie jest bieżąca. Pokaż nową treść i zaakceptuj ponownie. |
+| `external_marketplace_order` | 400 | etap pierwszy odstąpienia | Zamówienie z Allegro lub innego serwisu; obowiązuje jego proces. Wyszukiwanie odpowiada wtedy 200 z ustawionym `external_marketplace_order`. |
+| brak, `type: "not_found"` | 404 | wyszukiwanie i potwierdzenie odstąpienia | Nieznane zamówienie, zły e-mail, zły token: celowo ta sama odpowiedź. |
+| brak, `type: "not_allowed"` | 400 | etap pierwszy odstąpienia | Od żadnej pozycji nie można odstąpić; `message` podaje powód, a przy treściach cyfrowych podstawę prawną. |
+
+## Zasady wyświetlania warte wymuszenia
+
+- **Omnibus**: `omnibus.reference_label_text` i `omnibus.reference_price` obok
+  każdej obniżonej ceny, wszędzie, gdzie komunikowana jest obniżka, także w
+  koszyku; procent licz od ceny odniesienia (`omnibus.reduction_percent`). Nie
+  pokazuj ceny jako obniżonej, gdy `reference_not_higher` jest prawdą albo
+  `reason` to `no_prior_price`.
+- **Cena jednostkowa**: `unit_price.amount` za `unit_price.reference_label`,
+  pomijana przy `same_as_price`. Kaucja: „+ kwota zł kaucji”, osobno od ceny.
+- **Bezpieczeństwo produktu**: blok `safety` na stronie produktu, w samej ofercie.
+- **Odstąpienie**: przycisk wejścia ma `withdrawal.labels.entry`, końcowy
+  `withdrawal.labels.confirm`, z trasy informacji, dosłownie. Jedna strona, bez
+  przekierowań, wybór pozycji, edytowalne imię i e-mail.
+- **Zgody**: domyślnie niezaznaczone, treść dosłownie; wymagane i tak egzekwuje
+  serwer.

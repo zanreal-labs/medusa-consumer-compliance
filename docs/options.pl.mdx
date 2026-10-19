@@ -10,6 +10,8 @@ description: Każda opcja pluginu z wartością domyślną i progiem ustawowym, 
   resolve: "@zanreal/medusa-consumer-compliance",
   options: {
     defaultLocale: "pl",
+    externalSalesChannelIds: [],
+    externalOrderMetadataKeys: ["allegro_checkout_form_id"],
     omnibus: {
       windowDays: 30,
       gradualReductions: "per_change",
@@ -37,6 +39,8 @@ description: Każda opcja pluginu z wartością domyślną i progiem ustawowym, 
 | Opcja | Domyślnie | Uwagi |
 | --- | --- | --- |
 | `defaultLocale` | `pl` | Język zapasowy dla tekstów w wersjach językowych. |
+| `externalSalesChannelIds` | `[]` | Kanały sprzedaży, których zamówienia należą do serwisu zewnętrznego (w naszym backendzie env `CONSUMER_COMPLIANCE_EXTERNAL_SALES_CHANNELS`). Takie zamówienia nie dostają zapisu zgód ani oznaczenia braku zgody, a wyszukiwanie odstąpienia odpowiada `external_marketplace_order`. |
+| `externalOrderMetadataKeys` | `["allegro_checkout_form_id"]` | Klucze metadanych oznaczające zamówienie z serwisu zewnętrznego. Klucz Allegro jest zawsze dołączony. |
 | `omnibus.windowDays` | `30` | Może być dłuższy, nigdy krótszy: wartości poniżej 30 są podnoszone do 30. |
 | `omnibus.gradualReductions` | `per_change` | Prawo polskie. `keep_first` tylko tam, gdzie przyjęto art. 6a ust. 5 dyrektywy 98/6/WE. |
 | `omnibus.reductionDetection` | `sale_price_list` | `lower_than_original` liczy też cenniki typu override poniżej ceny regularnej. |
@@ -59,11 +63,14 @@ description: Każda opcja pluginu z wartością domyślną i progiem ustawowym, 
 | Nazwa | Harmonogram | Co robi |
 | --- | --- | --- |
 | `consumer-compliance-price-sweep` | `17 * * * *` | Zapisuje bieżącą cenę każdego wariantu; wyłapuje start i koniec cenników z harmonogramem. |
+| Hook `completeCartWorkflow.validate` | przy finalizacji koszyka | Blokuje finalizację, gdy brakuje wymaganej zgody albo jest nieaktualna. Tylko ścieżka koszyka: zamówienia tworzone przez `createOrderWorkflow` (import z Allegro) nie są sprawdzane. |
 | `consumer-compliance-housekeeping` | `41 3 * * *` | Unieważnia niepotwierdzone żądania odstąpienia, usuwa historię po okresie przechowywania. |
 
 Subskrybenci słuchają zdarzeń produktów, wariantów, cen i cenników (historia cen)
 oraz `product.deleted` (usuwa dane zgodności produktu; historia zostaje do końca
-okresu przechowywania). Plugin emituje `consumer_compliance.withdrawal.confirmed` z
+okresu przechowywania) i `order.placed` (zapisuje zgody z zamówienia, z pominięciem
+zamówień z serwisów zewnętrznych). Każdy subskrybent jest odporny na błędy: błąd
+jest logowany i nigdy nie trafia do emitera zdarzeń. Plugin emituje `consumer_compliance.withdrawal.confirmed` z
 `{ id, order_id }`.
 
 ## Workflowy
@@ -73,7 +80,9 @@ Eksportowane z `@zanreal/medusa-consumer-compliance/workflows`:
 `upsertUnitPricingWorkflow`, `upsertEconomicOperatorWorkflow`,
 `deleteEconomicOperatorWorkflow`, `updateComplianceSettingsWorkflow`,
 `requestWithdrawalWorkflow`, `confirmWithdrawalWorkflow`,
-`resendWithdrawalAcknowledgementWorkflow`, `updateWithdrawalStatusWorkflow`.
+`resendWithdrawalAcknowledgementWorkflow`, `updateWithdrawalStatusWorkflow`,
+`upsertConsentDefinitionWorkflow`, `deleteConsentDefinitionWorkflow`,
+`recordConsentAcceptancesWorkflow`, `snapshotOrderConsentsWorkflow`.
 
 ## API panelu
 
@@ -95,3 +104,7 @@ panelu.
 | `GET /withdrawals?status=&order_id=&offset=&limit=` | Rejestr. |
 | `GET /withdrawals/:id`, `POST /withdrawals/:id` | Odczyt; ustawienie `status` na `processed`, `rejected` lub z powrotem `confirmed`, z `note`. |
 | `POST /withdrawals/:id/resend` | Ponowna wysyłka potwierdzenia. |
+| `GET /consents`, `POST /consents` | Definicje zgód z historią wersji; tworzenie. |
+| `POST /consents/:id`, `DELETE /consents/:id` | Zmiana (zmiana treści lub odnośnika podnosi wersję); usunięcie. |
+| `GET /orders/:id/consents` | Zgody zapisane na zamówieniu albo `external_marketplace_order` dla zamówienia z serwisu. |
+| `GET /order-consents?order_id=&key=&from=&to=&format=csv` | Eksport wszystkich zgód z zamówień, JSON lub CSV. |

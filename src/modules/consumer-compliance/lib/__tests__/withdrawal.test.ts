@@ -189,3 +189,41 @@ describe("assessWithdrawal: digital-only store (ESD codes)", () => {
     expect(result.legal_basis).toBeNull();
   });
 });
+
+describe("assessWithdrawal: lines covered by the checkout consent", () => {
+  it("excludes only the covered products of a mixed order, with the legal basis per item", () => {
+    const result = assessWithdrawal({
+      ...base,
+      facts: facts({ digital_consent_at: new Date("2026-10-01T09:59:00Z"), digital_consent_product_ids: ["prod_key"] }),
+      items: [item({ line_item_id: "item_key", product_id: "prod_key" }), item({ line_item_id: "item_mug", product_id: "prod_mug" })],
+      now: new Date("2026-10-06T10:00:00Z"),
+    });
+    expect(result.right_of_withdrawal).toBe("applies");
+    const [key, mug] = result.items;
+    expect(key).toMatchObject({ basis: "contract_conclusion", eligible: false, excluded_reason: "digital_content" });
+    expect(key.legal_basis?.pl).toContain("Art. 38 ust. 1 pkt 13");
+    expect(mug).toMatchObject({ eligible: true, legal_basis: null });
+  });
+
+  it("answers no right of withdrawal when every line was covered", () => {
+    const result = assessWithdrawal({
+      ...base,
+      facts: facts({ deliveries: [], digital_consent_at: new Date("2026-10-01T09:59:00Z"), digital_consent_product_ids: ["prod_1"] }),
+      items: [item()],
+      now: new Date("2026-10-02T10:00:00Z"),
+    });
+    expect(result.right_of_withdrawal).toBe("excluded_digital_consent");
+    expect(result.digital_consent_missing).toBe(false);
+  });
+
+  it("flags missing consent for products classified as digital content", () => {
+    const result = assessWithdrawal({
+      ...base,
+      facts: facts({ digital_consent_at: null }),
+      items: [item({ exception: "digital_content", requires_shipping: false })],
+      now: new Date("2026-10-02T10:00:00Z"),
+    });
+    expect(result.digital_consent_missing).toBe(true);
+    expect(result.right_of_withdrawal).toBe("applies");
+  });
+});

@@ -3,6 +3,7 @@ import { Badge, Button, Container, Heading, Input, Label, Switch, Table, Tabs, T
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { ConsentsTab } from "../../../components/consents-tab";
 import { LocalizedField } from "../../../components/localized-field";
 import { NativeSelect } from "../../../components/native-select";
 import { api, errorMessage } from "../../../lib/api";
@@ -414,6 +415,7 @@ const ConsumerComplianceSettingsPage = () => {
       <Tabs defaultValue="disclosures">
         <Tabs.List>
           <Tabs.Trigger value="disclosures">{t("consumerCompliance.settings.tabs.disclosures")}</Tabs.Trigger>
+          <Tabs.Trigger value="consents">{t("consumerCompliance.settings.tabs.consents")}</Tabs.Trigger>
           <Tabs.Trigger value="operators">{t("consumerCompliance.settings.tabs.operators")}</Tabs.Trigger>
           <Tabs.Trigger value="gpsr">{t("consumerCompliance.settings.tabs.gpsr")}</Tabs.Trigger>
           <Tabs.Trigger value="history">{t("consumerCompliance.settings.tabs.history")}</Tabs.Trigger>
@@ -421,6 +423,9 @@ const ConsumerComplianceSettingsPage = () => {
         <div className="pt-4">
           <Tabs.Content value="disclosures">
             <DisclosuresTab />
+          </Tabs.Content>
+          <Tabs.Content value="consents">
+            <ConsentsTab />
           </Tabs.Content>
           <Tabs.Content value="operators">
             <OperatorsTab />

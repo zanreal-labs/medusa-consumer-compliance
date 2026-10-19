@@ -1,0 +1,105 @@
+---
+title: Zgody przy zamówieniu
+description: Zgody, które klient wyraża przy zamówieniu, dobierane według zawartości koszyka, egzekwowane na serwerze przy finalizacji koszyka i zamrażane dosłownie na zamówieniu jako dowód.
+---
+
+Niektórych zamówień nie da się złożyć bez zgody. Sklep sprzedający klucze
+licencyjne (kody ESD) dostarcza je od razu, a prawo odstąpienia wygasa tylko
+wtedy, gdy klient wyraźnie się na to zgodził i przyjął do wiadomości utratę
+prawa (art. 38 ust. 1 pkt 13 ustawy o prawach konsumenta). Bez tej zgody nie
+przyjmujemy takiego zamówienia, tak samo jak Allegro. Inne zgody, na przykład
+akceptacja regulaminu, mogą dotyczyć każdego zamówienia.
+
+## Definicje
+
+**Ustawienia > Zgodność konsumencka > Zgody przy zamówieniu**:
+
+| Pole | Znaczenie |
+| --- | --- |
+| Klucz | Stały identyfikator wysyłany przez front, na przykład `digital_immediate_delivery`. Nigdy się nie zmienia. |
+| Treść (PL, EN) | Dokładnie te słowa, które klient widzi i akceptuje. |
+| Powiązany dokument | Opcjonalny adres i tekst odnośnika, na przykład do regulaminu. |
+| Wymagana | Zgoda wymagana blokuje finalizację koszyka do czasu akceptacji. |
+| Aktywna | Nieaktywne zgody nie są pokazywane. |
+| Cel | `digital_content_withdrawal_waiver` oznacza zgodę z art. 38 ust. 1 pkt 13; jej akceptacja wyłącza prawo odstąpienia dla objętych nią pozycji. |
+| Reguły | Kiedy zgoda dotyczy koszyka (niżej). |
+
+Zmiana treści lub odnośnika tworzy **nową wersję**. Poprzednie wersje zostają z
+treścią, tak samo jak każda akceptacja. Gdy jest powiązany dokument, plugin
+pobiera go przy zapisie i zapisuje jego skrót SHA-256 przy wersji, żeby
+zamówienie pokazywało, która wersja regulaminu obowiązywała. Dokument, którego
+nie da się pobrać, zapisuje się bez skrótu.
+
+### Zgoda tworzona domyślnie
+
+Przy pierwszym użyciu plugin tworzy `digital_immediate_delivery`, wymaganą, dla
+produktów z metadanymi `is_digital_content: true`:
+
+> Wyrażam zgodę na rozpoczęcie dostarczania treści cyfrowej (kodu) przed upływem
+> terminu do odstąpienia od umowy. Przyjmuję do wiadomości, że po dostarczeniu
+> treści cyfrowej utracę prawo odstąpienia od umowy.
+
+Pierwsze zdanie to wyraźna i uprzednia zgoda, drugie to przyjęcie do wiadomości,
+czyli dwa elementy wymagane przez art. 38 ust. 1 pkt 13. Powstaje raz; późniejsza
+edycja lub usunięcie są respektowane.
+
+## Reguły
+
+Zgoda dotyczy koszyka, gdy **którakolwiek** reguła pasuje do co najmniej jednej
+pozycji:
+
+| Reguła | Pasuje, gdy |
+| --- | --- |
+| `always` | Zawsze (każdy koszyk). |
+| `product_flag` | Klucz metadanych produktu jest ustawiony (`true`, `1`, `"true"`, `"yes"`, `"tak"`). |
+| `product` | Identyfikator produktu jest na liście. |
+| `product_type` | Identyfikator typu produktu jest na liście. |
+| `product_tag` | Któryś z tagów produktu jest na liście. |
+| `collection` | Identyfikator kolekcji jest na liście. |
+| `category` | Któraś z kategorii produktu jest na liście. |
+
+Definicja bez reguł nigdy nie jest pokazywana. Przy zgodzie na treści cyfrowe
+liczą się dopasowane pozycje: w koszyku mieszanym prawo odstąpienia tracą tylko te
+produkty.
+
+## Egzekwowanie
+
+Egzekwowanie jest na serwerze, w hooku `validate` workflowu
+`completeCartWorkflow` Medusy, więc `POST /store/carts/:id/complete` kończy się
+błędem, zanim cokolwiek zostanie zarezerwowane lub obciążone, gdy brakuje
+wymaganej zgody (`consent_required`) albo zaakceptowano starszą wersję
+(`consent_version_outdated`). Front nie może tego pominąć. Medusa pozwala na jeden
+handler na hook, więc nic innego w backendzie nie może rejestrować
+`completeCartWorkflow.hooks.validate`; dziś nic tego nie robi.
+
+## Zapis na zamówieniu
+
+Gdy koszyk staje się zamówieniem (`order.placed`), plugin zamraża każdą
+zaakceptowaną zgodę na zamówieniu we własnej tabeli: pełną treść tak, jak ją
+pokazano, język, wersję, czy była wymagana, adres powiązanego dokumentu i jego
+skrót, chwilę akceptacji oraz IP i przeglądarkę klienta. Tych wierszy nie da się
+zmienić ani usunąć, więc późniejsza edycja definicji nigdy nie zmienia tego, co
+pokazuje zamówienie. Dla zgody na treści cyfrowe plugin zapisuje też
+`digital_content_consent_at` i `digital_content_consent_product_ids` w metadanych
+zamówienia.
+
+Strona zamówienia w panelu pokazuje je w widżecie **Zgody klienta**, dosłownie.
+`GET /admin/consumer-compliance/orders/:id/consents` zwraca je dla zamówienia, a
+`GET /admin/consumer-compliance/order-consents?format=csv` eksportuje. E-mail z
+potwierdzeniem odstąpienia je cytuje.
+
+**Potwierdzenie na trwałym nośniku.** Art. 38 ust. 1 pkt 13 wymaga też, żeby
+przedsiębiorca potwierdził zgodę na trwałym nośniku (art. 21 ust. 1). E-mail z
+potwierdzeniem zamówienia, wysyłany przez backend, powinien cytować
+zaakceptowaną zgodę; zapis daje mu dokładną treść.
+
+## Allegro i inne serwisy
+
+Allegro zbiera własne zgody i prowadzi własny proces odstąpień. Zamówienia
+importowane przez medusa-allegro powstają przez `createOrderWorkflow`, a nie przez
+koszyk, więc egzekwowanie przy finalizacji koszyka ich nie dotyczy. Plugin
+rozpoznaje je po `metadata.allegro_checkout_form_id` (albo po kanale sprzedaży z
+`externalSalesChannelIds`) i niczego przy nich nie robi: bez zapisu zgód, bez
+zmian metadanych, bez oznaczenia braku zgody; widżet w panelu pokazuje „Zgody
+zbierane przez Allegro”, a wyszukiwanie odstąpienia odpowiada
+`external_marketplace_order`.

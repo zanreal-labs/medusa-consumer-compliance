@@ -19,7 +19,7 @@ offer a **withdrawal function** on its online interface. It applies from 19 June
 ## The flow
 
 ```text
-consumer                         storefront                         plugin
+consumer                         frontend                         plugin
 --------                         ----------                         ------
 "Odstąp od umowy tutaj"  ──>  lookup (order + e-mail, or logged in) ──> items, eligibility, deadlines
 fills name, items, e-mail ──>  POST /withdrawals                     ──> record: pending_confirmation, token
@@ -113,19 +113,34 @@ or 21). So the answer depends on the order:
 | Present (ISO timestamp) | `right_of_withdrawal: "excluded_digital_consent"` with `legal_basis` (Polish and English text of the provision); step one is refused with the same reason | Nothing to register |
 | Missing | `right_of_withdrawal: "applies"`, `digital_consent_missing: true`; the ordinary 14-day right from the order date | Flagged "Brak zgody na natychmiastowe dostarczenie" |
 
-**The consent has to be captured by whatever checkout sells the codes**: a
+**On our own checkout the consent is mandatory and collected by the plugin's
+[checkout consents](./consents.en.mdx)**: the cart cannot be completed without it,
+and the order then carries the consent and the products it covered. In a mixed
+order only those products lose the right; the rest keep the 14 days. The
+missing-consent flag is left for orders created outside that flow.
+
+**Whatever checkout sells the codes must capture the consent**: a
 checkbox that is not pre-ticked, with the information about losing the right,
 before the code is shown or sent, and the timestamp written to the order
 metadata. Today that is Allegro, and Allegro orders follow Allegro's own
 withdrawal and consent process; the plugin's function is for orders placed
-through our own storefront, which does not exist yet. A future storefront must
+through our own frontend, which does not exist yet. A future frontend must
 write `digital_content_consent_at` at checkout, otherwise every order keeps the
 14-day right.
+
+## Allegro orders
+
+Orders from Allegro (`metadata.allegro_checkout_form_id`) or from a sales
+channel in `externalSalesChannelIds` follow the marketplace's own consent and
+withdrawal process. The lookup answers `external_marketplace_order` and step one
+is refused with that code; nothing in the plugin writes to these orders.
 
 ## The acknowledgement
 
 Art. 11a(4) requires an acknowledgement on a durable medium, without undue delay,
-with the statement's content and the date and time of submission. The plugin sends
+with the statement's content and the date and time of submission. When the order
+has checkout consents, the e-mail also quotes them verbatim with version and
+time. The plugin sends
 it through the Medusa notification module on the `email` channel with ready
 `content` (subject, HTML and text, Polish or English) plus `template` and `data`
 for providers that render their own. If sending fails, the withdrawal stays

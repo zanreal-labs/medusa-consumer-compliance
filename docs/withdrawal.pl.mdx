@@ -118,6 +118,12 @@ to potwierdził (art. 15 lub 21). Odpowiedź zależy więc od zamówienia:
 | Są (znacznik czasu ISO) | `right_of_withdrawal: "excluded_digital_consent"` z `legal_basis` (treść przepisu po polsku i angielsku); etap pierwszy jest odrzucany z tym samym uzasadnieniem | Brak wpisu |
 | Brak | `right_of_withdrawal: "applies"`, `digital_consent_missing: true`; zwykłe 14 dni od daty zamówienia | Oznaczenie „Brak zgody na natychmiastowe dostarczenie” |
 
+**W naszym własnym sklepie zgoda jest obowiązkowa i zbierana przez
+[zgody przy zamówieniu](./consents.pl.mdx)**: bez niej koszyka nie da się
+sfinalizować, a zamówienie dostaje zgodę i listę objętych nią produktów. W
+zamówieniu mieszanym prawo tracą tylko te produkty; pozostałe zachowują 14 dni.
+Oznaczenie braku zgody zostaje dla zamówień utworzonych poza tym procesem.
+
 **Zgodę musi zebrać ten, kto sprzedaje kody**: niezaznaczone domyślnie pole z
 informacją o utracie prawa, przed pokazaniem lub wysłaniem kodu, oraz zapis
 znacznika czasu w metadanych zamówienia. Dziś kody sprzedaje Allegro, a zamówienia
@@ -126,10 +132,18 @@ zamówień z naszego własnego sklepu, którego jeszcze nie ma. Przyszły sklep 
 zapisywać `digital_content_consent_at` przy zamówieniu, inaczej każde zamówienie
 zachowa 14-dniowe prawo odstąpienia.
 
+## Zamówienia z Allegro
+
+Zamówienia z Allegro (`metadata.allegro_checkout_form_id`) albo z kanału sprzedaży
+z listy `externalSalesChannelIds` podlegają procesowi zgód i odstąpień serwisu.
+Wyszukiwanie odpowiada `external_marketplace_order`, a etap pierwszy jest
+odrzucany z tym kodem; plugin niczego w tych zamówieniach nie zapisuje.
+
 ## Potwierdzenie
 
 Art. 11a ust. 4 wymaga potwierdzenia na trwałym nośniku, bez zbędnej zwłoki, z
-treścią oświadczenia oraz datą i godziną złożenia. Plugin wysyła je przez moduł
+treścią oświadczenia oraz datą i godziną złożenia. Gdy zamówienie ma zgody z
+zamówienia, e-mail cytuje je też dosłownie z wersją i chwilą akceptacji. Plugin wysyła je przez moduł
 powiadomień Medusy kanałem `email`, z gotowym `content` (temat, HTML i tekst, po
 polsku lub angielsku) oraz `template` i `data` dla dostawców, którzy renderują
 własne szablony. Jeśli wysyłka się nie uda, odstąpienie pozostaje złożone, błąd

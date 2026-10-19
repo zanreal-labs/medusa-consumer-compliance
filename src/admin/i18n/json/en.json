@@ -186,7 +186,8 @@
         "disclosures": "Disclosures",
         "operators": "Manufacturers",
         "gpsr": "GPSR gaps",
-        "history": "Price history"
+        "history": "Price history",
+        "consents": "Checkout consents"
       },
       "reviewsEnabled": "The store publishes customer reviews",
       "reviews": "How reviews are verified",
@@ -284,6 +285,60 @@
       "processed": "Processed",
       "rejected": "Rejected",
       "expired": "Expired"
+    },
+    "consents": {
+      "description": "Consents the customer gives at checkout, shown when their rules match the cart. Required consents block completing the cart until accepted in the current version. Editing the text or link creates a new version; earlier versions and every recorded acceptance are kept.",
+      "key": "Key",
+      "version": "Version",
+      "status": "Status",
+      "rules": "Rules",
+      "purpose": "Purpose",
+      "required": "Required",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noRules": "No rules: never shown",
+      "label": "Text shown to the customer",
+      "labelHint": "Exactly the words the customer sees and accepts.",
+      "linkUrl": "Linked document (URL)",
+      "linkLabel": "Link text",
+      "rulesHint": "The consent applies when any rule matches a product in the cart.",
+      "ruleType": "Rule type",
+      "flagKey": "Product metadata key",
+      "ruleValues": "Ids",
+      "ruleValuesHint": "Ids, comma separated",
+      "addRule": "Add rule",
+      "add": "Add consent",
+      "saved": "Consent saved",
+      "saveError": "Could not save the consent",
+      "deleted": "Consent deleted",
+      "deleteError": "Could not delete the consent",
+      "versionNote": "Current version {{version}}. Changing the text or the link creates the next version.",
+      "history": "Version history",
+      "versionLabel": "Version {{version}}"
+    },
+    "consentPurposes": {
+      "generic": "General",
+      "digital_content_withdrawal_waiver": "Digital content: loss of the right of withdrawal"
+    },
+    "consentRuleTypes": {
+      "always": "Always",
+      "product_flag": "Product flag",
+      "product": "Products",
+      "product_type": "Product types",
+      "product_tag": "Product tags",
+      "collection": "Collections",
+      "category": "Categories"
+    },
+    "orderConsents": {
+      "heading": "Customer consents",
+      "allegro": "Consents collected by Allegro.",
+      "external": "Consents collected by the external marketplace.",
+      "none": "No consents were recorded for this order.",
+      "version": "version {{version}}",
+      "required": "required",
+      "acceptedAt": "Accepted",
+      "document": "Document",
+      "userAgent": "Browser"
     }
   }
 }

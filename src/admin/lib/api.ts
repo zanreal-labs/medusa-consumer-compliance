@@ -128,9 +128,52 @@ export interface Withdrawal {
   assessment: { digital_consent_missing?: boolean } | null;
 }
 
+export interface ConsentRule {
+  type: "always" | "product_type" | "product_tag" | "collection" | "category" | "product" | "product_flag";
+  values?: string[];
+  key?: string;
+}
+
+export interface ConsentDefinition {
+  id: string;
+  key: string;
+  label: Record<string, string>;
+  link_url: string | null;
+  link_label: Localized;
+  link_sha256?: string | null;
+  version: number;
+  required: boolean;
+  active: boolean;
+  purpose: "generic" | "digital_content_withdrawal_waiver";
+  rules: ConsentRule[];
+  position: number;
+  versions?: { id: string; version: number; label: Record<string, string>; link_url: string | null; link_sha256: string | null; created_at: string }[];
+}
+
+export interface OrderConsent {
+  id: string;
+  key: string;
+  version: number;
+  required: boolean;
+  purpose: string;
+  text: string;
+  locale: string | null;
+  link_url: string | null;
+  link_sha256: string | null;
+  accepted_at: string;
+  ip: string | null;
+  user_agent: string | null;
+}
+
 const BASE = "/admin/consumer-compliance";
 
 export const api = {
+  consents: () => sdk.client.fetch<{ consents: ConsentDefinition[] }>(`${BASE}/consents`),
+  saveConsent: (body: Partial<ConsentDefinition>, id?: string) =>
+    sdk.client.fetch<{ consent: ConsentDefinition }>(id ? `${BASE}/consents/${id}` : `${BASE}/consents`, { body, method: "POST" }),
+  deleteConsent: (id: string) => sdk.client.fetch(`${BASE}/consents/${id}`, { method: "DELETE" }),
+  orderConsents: (orderId: string) =>
+    sdk.client.fetch<{ consents: OrderConsent[]; external_marketplace_order: { marketplace: string } | null }>(`${BASE}/orders/${orderId}/consents`),
   backfill: () => sdk.client.fetch<{ started: boolean }>(`${BASE}/price-history/backfill`, { method: "POST" }),
   deleteOperator: (id: string) => sdk.client.fetch(`${BASE}/operators/${id}`, { method: "DELETE" }),
   gpsrReport: (offset: number) =>

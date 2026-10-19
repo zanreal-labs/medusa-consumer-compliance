@@ -6,6 +6,7 @@ import { recordPriceHistoryWorkflow } from "../workflows/record-price-history";
 import { createCoalescingQueue } from "./lib/coalescing-queue";
 import type { CoalescingQueue } from "./lib/coalescing-queue";
 import { PRICE_HISTORY_EVENTS, parsePriceEvent } from "./lib/events";
+import { failSafe } from "./lib/fail-safe";
 
 /**
  * Record a price change for the Omnibus history within seconds of it
@@ -20,6 +21,13 @@ export default async function consumerCompliancePriceHistoryHandler({
   container,
   event,
 }: SubscriberArgs<unknown>): Promise<void> {
+  await failSafe(container, "price history event", async () => {
+    await handle(container, event.name, event.data);
+  });
+}
+
+async function handle(container: MedusaContainer, name: string, data: unknown): Promise<void> {
+  const event = { data, name };
   const parsed = parsePriceEvent(event.name, event.data);
   if (!parsed) {
     return;

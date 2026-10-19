@@ -38,8 +38,8 @@ bez szkody. Działają też pod blokadą.
 Dla bieżącej ceny wariantu plugin ustala:
 
 1. **Czy to komunikowana obniżka?** Domyślnie tak, gdy cena pochodzi z cennika
-   typu `sale` i jest niższa od regularnej (to, co standardowy sklep pokazuje jako
-   przekreśloną cenę). Przy `reductionDetection: "lower_than_original"` liczy się
+   typu `sale` i jest niższa od regularnej (w Medusie `calculated_amount` poniżej
+   `original_amount` na cenniku promocyjnym). Przy `reductionDetection: "lower_than_original"` liczy się
    każda cena poniżej regularnej. Cenniki z `ignoredPriceListIds` nigdy się nie
    liczą.
 2. **Od kiedy trwa?** Od `valid_from` bieżącej ceny, cofając się po wcześniejszych

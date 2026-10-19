@@ -10,6 +10,8 @@ description: Every plugin option with its default and legal floor, the scheduled
   resolve: "@zanreal/medusa-consumer-compliance",
   options: {
     defaultLocale: "pl",
+    externalSalesChannelIds: [],
+    externalOrderMetadataKeys: ["allegro_checkout_form_id"],
     omnibus: {
       windowDays: 30,
       gradualReductions: "per_change",
@@ -37,6 +39,8 @@ description: Every plugin option with its default and legal floor, the scheduled
 | Option | Default | Notes |
 | --- | --- | --- |
 | `defaultLocale` | `pl` | Fallback for localised texts. |
+| `externalSalesChannelIds` | `[]` | Sales channels whose orders belong to a marketplace (env `CONSUMER_COMPLIANCE_EXTERNAL_SALES_CHANNELS` in our backend). Such orders get no consent snapshot, no missing-consent flag, and the withdrawal lookup answers `external_marketplace_order`. |
+| `externalOrderMetadataKeys` | `["allegro_checkout_form_id"]` | Order metadata keys marking a marketplace order. The Allegro key is always included. |
 | `omnibus.windowDays` | `30` | Can be longer, never shorter: values below 30 are raised to 30. |
 | `omnibus.gradualReductions` | `per_change` | Polish law. `keep_first` only where art. 6a(5) of Directive 98/6/EC was adopted. |
 | `omnibus.reductionDetection` | `sale_price_list` | `lower_than_original` also counts override lists below the regular price. |
@@ -59,11 +63,14 @@ description: Every plugin option with its default and legal floor, the scheduled
 | Name | Schedule | What |
 | --- | --- | --- |
 | `consumer-compliance-price-sweep` | `17 * * * *` | Records every variant's current price; catches scheduled price list starts and ends. |
+| Hook `completeCartWorkflow.validate` | on cart completion | Blocks completion while a required checkout consent is missing or outdated. Only the cart path: orders created with `createOrderWorkflow` (Allegro imports) are never checked. |
 | `consumer-compliance-housekeeping` | `41 3 * * *` | Expires unconfirmed withdrawal requests, removes history past retention. |
 
 Subscribers listen to product, variant, price and price list events (price
 history) and to `product.deleted` (removes the product's compliance data; the
-history is kept until retention). The plugin emits
+history is kept until retention), and to `order.placed` (freezes checkout
+consents onto the order, skipping marketplace orders). Every subscriber is
+fail-safe: an error is logged and never reaches the event emitter. The plugin emits
 `consumer_compliance.withdrawal.confirmed` with `{ id, order_id }`.
 
 ## Workflows
@@ -73,7 +80,9 @@ Exported from `@zanreal/medusa-consumer-compliance/workflows`:
 `upsertUnitPricingWorkflow`, `upsertEconomicOperatorWorkflow`,
 `deleteEconomicOperatorWorkflow`, `updateComplianceSettingsWorkflow`,
 `requestWithdrawalWorkflow`, `confirmWithdrawalWorkflow`,
-`resendWithdrawalAcknowledgementWorkflow`, `updateWithdrawalStatusWorkflow`.
+`resendWithdrawalAcknowledgementWorkflow`, `updateWithdrawalStatusWorkflow`,
+`upsertConsentDefinitionWorkflow`, `deleteConsentDefinitionWorkflow`,
+`recordConsentAcceptancesWorkflow`, `snapshotOrderConsentsWorkflow`.
 
 ## Admin API
 
@@ -94,3 +103,7 @@ All under `/admin/consumer-compliance`, authenticated like every admin route.
 | `GET /withdrawals?status=&order_id=&offset=&limit=` | The register. |
 | `GET /withdrawals/:id`, `POST /withdrawals/:id` | Read; set `status` to `processed`, `rejected` or back to `confirmed`, with `note`. |
 | `POST /withdrawals/:id/resend` | Send the acknowledgement again. |
+| `GET /consents`, `POST /consents` | Consent definitions with version history; create. |
+| `POST /consents/:id`, `DELETE /consents/:id` | Update (a text or link change bumps the version); delete. |
+| `GET /orders/:id/consents` | The consents frozen onto an order, or `external_marketplace_order` for a marketplace order. |
+| `GET /order-consents?order_id=&key=&from=&to=&format=csv` | Export of all order consents, JSON or CSV. |

@@ -6,7 +6,10 @@ description: EU and Polish consumer-protection duties of an online shop, support
 `@zanreal/medusa-consumer-compliance` is a Medusa v2 plugin for a shop that sells
 to consumers in Poland (and, with the same rules, elsewhere in the EU). It keeps
 the data and runs the processes that consumer law expects of a store's backend,
-and hands the storefront everything it needs to show it.
+and hands the frontend everything it needs to show it.
+
+The plugin is headless: it ships no frontend code, and everything a frontend
+needs is in the Store API, described in [Frontend API contract](./frontend-api.en.mdx).
 
 > **Not legal advice.** The plugin supports compliance; it does not deliver it.
 > Labels, terms, the withdrawal instructions and every decision listed under
@@ -17,13 +20,14 @@ and hands the storefront everything it needs to show it.
 
 | Duty | What the plugin does |
 | --- | --- |
-| Omnibus: lowest price in the 30 days before a reduction | Records every price change per variant and pricing context, computes the reference price by the Polish rules, exposes it with the label the storefront must print. See [Omnibus](./omnibus.en.mdx). |
+| Omnibus: lowest price in the 30 days before a reduction | Records every price change per variant and pricing context, computes the reference price by the Polish rules, exposes it with the label the frontend must print. See [Omnibus](./omnibus.en.mdx). |
 | Unit price | Stores net quantity, unit and exemptions per variant, computes the unit price from the live price. See [Unit prices](./unit-prices.en.mdx). |
 | GPSR product information | Manufacturers and EU responsible persons as reusable records, warnings in Polish, validation of what is missing. See [Product safety](./product-safety.en.mdx). |
 | Online withdrawal function (Directive 2023/2673) | A two-step Store API flow, per-item eligibility and deadlines, the acknowledgement on a durable medium, an admin register. See [Withdrawal](./withdrawal.en.mdx). |
+| Checkout consents | Consents chosen by the cart contents, enforced when the cart is completed, frozen verbatim on the order. See [Checkout consents](./consents.en.mdx). |
 | Reviews and personalised pricing | Editable texts served by the Store API. See [Disclosures](./disclosures.en.mdx). |
 
-What it does not do: render anything in your storefront, decide whether a product
+What it does not do: render anything in your frontend, decide whether a product
 is perishable or covered by GPSR, or classify your discount codes. Those are store
 decisions, and the plugin makes each of them an explicit field instead of a guess.
 
@@ -35,8 +39,8 @@ decisions, and the plugin makes each of them an explicit field instead of a gues
                                                         v
                                     consumer_compliance_price_history
                                                         │
- storefront ── GET /store/products/:id/compliance ──────┤──> Omnibus reference + unit price + GPSR block
- storefront ── POST /store/consumer-compliance/withdrawals (+ /confirm) ──> withdrawal record ──> acknowledgement e-mail
+ frontend ── GET /store/products/:id/compliance ──────┤──> Omnibus reference + unit price + GPSR block
+ frontend ── POST /store/consumer-compliance/withdrawals (+ /confirm) ──> withdrawal record ──> acknowledgement e-mail
  admin ── product widgets, Settings > Consumer compliance, Withdrawals register
 ```
 
@@ -79,7 +83,7 @@ The hourly sweep would do the same within the hour. Every option is described in
 - **Product page**: a compliance card (GPSR data, Omnibus treatment, withdrawal
   exception, unit prices per variant) and a price history card (chart, table,
   reference price, external price windows).
-- **Order page**: withdrawals submitted for the order.
+- **Order page**: the customer's consents (Zgody klienta) and withdrawals submitted for the order.
 - **Withdrawals** (sidebar): the register of every withdrawal statement.
 - **Settings > Consumer compliance**: disclosure texts, manufacturers and
   responsible persons, the list of products with GPSR gaps, price history status.

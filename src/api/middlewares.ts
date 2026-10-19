@@ -1,5 +1,7 @@
 import { authenticate, defineMiddlewares, validateAndTransformBody } from "@medusajs/framework/http";
 import {
+  ConsentAcceptanceBody,
+  ConsentDefinitionBody,
   ExternalPriceBody,
   OperatorBody,
   ProductComplianceBody,
@@ -28,6 +30,9 @@ export default defineMiddlewares({
     { matcher: "/admin/consumer-compliance/operators/:id", method: ["POST"], middlewares: [validateAndTransformBody(OperatorBody)] },
     { matcher: "/admin/consumer-compliance/settings", method: ["POST"], middlewares: [validateAndTransformBody(SettingsBody)] },
     { matcher: "/admin/consumer-compliance/withdrawals/:id", method: ["POST"], middlewares: [validateAndTransformBody(WithdrawalStatusBody)] },
+    { matcher: "/admin/consumer-compliance/consents", method: ["POST"], middlewares: [validateAndTransformBody(ConsentDefinitionBody)] },
+    { matcher: "/admin/consumer-compliance/consents/:id", method: ["POST"], middlewares: [validateAndTransformBody(ConsentDefinitionBody)] },
+    { matcher: "/store/consumer-compliance/carts/:id/consents", method: ["POST"], middlewares: [validateAndTransformBody(ConsentAcceptanceBody)] },
     { matcher: "/store/consumer-compliance/withdrawals", method: ["GET"], middlewares: [authenticate("customer", ["session", "bearer"])] },
     { matcher: "/store/consumer-compliance/withdrawals", method: ["POST"], middlewares: [optionalCustomer, validateAndTransformBody(WithdrawalRequestBody)] },
     { matcher: "/store/consumer-compliance/withdrawals/lookup", method: ["POST"], middlewares: [optionalCustomer, validateAndTransformBody(WithdrawalLookupBody)] },

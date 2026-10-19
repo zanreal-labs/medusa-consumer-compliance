@@ -1,19 +1,28 @@
 import type { Context } from "@medusajs/framework/types";
-import { InjectManager, InjectTransactionManager, MedusaContext, MedusaService } from "@medusajs/framework/utils";
+import { InjectManager, InjectTransactionManager, MedusaContext, MedusaError, MedusaService } from "@medusajs/framework/utils";
 import { evaluateOmnibus } from "./lib/omnibus";
 import type { OmnibusResult, PriceInterval } from "./lib/omnibus";
 import type { OpenInterval, PriceObservation, RecordingDecision } from "./lib/price-recording";
 import { isDeletable, retentionCutoff } from "./lib/retention";
 import ComplianceSettings from "./models/compliance-settings";
+import ConsentAcceptance from "./models/consent-acceptance";
+import ConsentDefinition from "./models/consent-definition";
+import ConsentVersion from "./models/consent-version";
+import OrderConsent from "./models/order-consent";
+import { DEFAULT_DIGITAL_CONSENT_LABEL, sanitizeRules } from "./lib/consents";
+import type { ConsentDefinitionData } from "./lib/consents";
 import EconomicOperator from "./models/economic-operator";
 import PriceHistory from "./models/price-history";
 import ProductCompliance from "./models/product-compliance";
 import VariantUnitPricing from "./models/variant-unit-pricing";
 import WithdrawalRequest from "./models/withdrawal-request";
 import type { ConsumerComplianceModuleOptions, OmnibusMode, ResolvedConsumerComplianceOptions } from "./types";
-import { resolveOptions } from "./types";
+import { DIGITAL_CONSENT_KEY, DIGITAL_PRODUCT_FLAG, resolveOptions } from "./types";
 
 export const COMPLIANCE_SETTINGS_ID = "ccset_singleton";
+
+const ORDER_CONSENT_IMMUTABLE =
+  "Order consents are an immutable record of what the customer accepted; they cannot be changed or removed.";
 
 type InjectedDependencies = Record<string, unknown>;
 
@@ -53,6 +62,24 @@ export interface ComplianceSettingsRow {
   personalised_pricing_used: boolean;
   withdrawal_info: Record<string, string> | null;
   omnibus_note: Record<string, string> | null;
+  consents_seeded: boolean;
+}
+
+export function toConsentDefinition(row: Record<string, unknown>): ConsentDefinitionData {
+  return {
+    active: row.active !== false,
+    id: row.id as string,
+    key: row.key as string,
+    label: (row.label as Record<string, string> | null) ?? {},
+    link_label: (row.link_label as Record<string, string> | null) ?? null,
+    link_sha256: (row.link_sha256 as string | null) ?? null,
+    link_url: (row.link_url as string | null) ?? null,
+    position: Number(row.position ?? 0),
+    purpose: row.purpose === "digital_content_withdrawal_waiver" ? "digital_content_withdrawal_waiver" : "generic",
+    required: row.required !== false,
+    rules: sanitizeRules(row.rules),
+    version: Number(row.version ?? 1),
+  };
 }
 
 function num(value: unknown): number {
@@ -126,7 +153,11 @@ export function evaluateSeries(
  */
 class ConsumerComplianceModuleService extends MedusaService({
   ComplianceSettings,
+  ConsentAcceptance,
+  ConsentDefinition,
+  ConsentVersion,
   EconomicOperator,
+  OrderConsent,
   PriceHistory,
   ProductCompliance,
   VariantUnitPricing,
@@ -160,6 +191,57 @@ class ConsumerComplianceModuleService extends MedusaService({
       const [winner] = await this.listComplianceSettings({ id: COMPLIANCE_SETTINGS_ID }, {}, sharedContext);
       return winner as unknown as ComplianceSettingsRow;
     }
+  }
+
+  // ─── Checkout consents ───
+
+  /**
+   * Create the default consents once: the digital content consent of art. 38
+   * ust. 1 pkt 13, required, matching products flagged `is_digital_content`.
+   * A flag in the settings row makes this a one-off, so an operator who
+   * deletes or edits it is never overridden.
+   */
+  @InjectManager()
+  async ensureDefaultConsents(@MedusaContext() sharedContext: Context = {}): Promise<void> {
+    const settings = await this.getSettings(sharedContext);
+    if (settings.consents_seeded) {
+      return;
+    }
+    const [existing] = await this.listConsentDefinitions({ key: DIGITAL_CONSENT_KEY }, { withDeleted: true }, sharedContext);
+    if (!existing) {
+      try {
+        const created = await this.createConsentDefinitions(
+          {
+            active: true,
+            key: DIGITAL_CONSENT_KEY,
+            label: DEFAULT_DIGITAL_CONSENT_LABEL,
+            position: 0,
+            purpose: "digital_content_withdrawal_waiver",
+            required: true,
+            rules: [{ key: DIGITAL_PRODUCT_FLAG, type: "product_flag" }] as unknown as Record<string, unknown>,
+            version: 1,
+          },
+          sharedContext,
+        );
+        await this.createConsentVersions(
+          { consent_id: created.id, key: DIGITAL_CONSENT_KEY, label: DEFAULT_DIGITAL_CONSENT_LABEL, version: 1 },
+          sharedContext,
+        );
+      } catch {
+        // A concurrent first call created it.
+      }
+    }
+    await this.updateComplianceSettings({ consents_seeded: true, id: settings.id }, sharedContext);
+  }
+
+  @InjectManager()
+  async listConsentDefinitionData(
+    filters: Record<string, unknown> = {},
+    @MedusaContext() sharedContext: Context = {},
+  ): Promise<ConsentDefinitionData[]> {
+    await this.ensureDefaultConsents(sharedContext);
+    const rows = await this.listConsentDefinitions(filters, { order: { position: "ASC" }, take: null }, sharedContext);
+    return rows.map((row) => toConsentDefinition(row as unknown as Record<string, unknown>));
   }
 
   // ─── Price history ───
@@ -380,6 +462,25 @@ class ConsumerComplianceModuleService extends MedusaService({
     }
     return toDelete.length;
   }
+
+  // ─── Immutability guard for order consents ───
+  // Arrow properties, not methods: MedusaService declares the generated
+  // mutators as properties (see medusa-product-costs for the TS2425 detail).
+  updateOrderConsents = async (..._args: unknown[]): Promise<never> => {
+    throw new MedusaError(MedusaError.Types.NOT_ALLOWED, ORDER_CONSENT_IMMUTABLE);
+  };
+
+  deleteOrderConsents = async (..._args: unknown[]): Promise<never> => {
+    throw new MedusaError(MedusaError.Types.NOT_ALLOWED, ORDER_CONSENT_IMMUTABLE);
+  };
+
+  softDeleteOrderConsents = async (..._args: unknown[]): Promise<never> => {
+    throw new MedusaError(MedusaError.Types.NOT_ALLOWED, ORDER_CONSENT_IMMUTABLE);
+  };
+
+  restoreOrderConsents = async (..._args: unknown[]): Promise<never> => {
+    throw new MedusaError(MedusaError.Types.NOT_ALLOWED, ORDER_CONSENT_IMMUTABLE);
+  };
 }
 
 export default ConsumerComplianceModuleService;

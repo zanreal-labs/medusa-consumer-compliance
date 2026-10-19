@@ -1,5 +1,7 @@
 import { z } from "@medusajs/framework/zod";
 import {
+  CONSENT_PURPOSES,
+  CONSENT_RULE_TYPES,
   OMNIBUS_MODES,
   OPERATOR_ROLES,
   QUANTITY_UNITS,
@@ -107,3 +109,28 @@ export const ExternalPriceBody = z.object({
   valid_to: z.coerce.date(),
 });
 export type ExternalPriceBodyType = z.infer<typeof ExternalPriceBody>;
+
+export const ConsentAcceptanceBody = z.object({
+  acceptances: z.array(z.object({ key: z.string().min(1).max(64), version: z.number().int().positive() })).min(1).max(50),
+  locale: z.string().max(20).optional(),
+});
+export type ConsentAcceptanceBodyType = z.infer<typeof ConsentAcceptanceBody>;
+
+const consentRule = z.object({
+  key: z.string().max(100).optional(),
+  type: z.enum(CONSENT_RULE_TYPES),
+  values: z.array(z.string().max(100)).max(500).optional(),
+});
+
+export const ConsentDefinitionBody = z.object({
+  active: z.boolean().optional(),
+  key: z.string().regex(/^[a-z0-9_]{2,64}$/u).optional(),
+  label: z.record(z.string().min(2).max(8), z.string().max(5000)).optional(),
+  link_label: localized,
+  link_url: z.string().url().max(2000).nullable().optional(),
+  position: z.number().int().min(0).max(1000).optional(),
+  purpose: z.enum(CONSENT_PURPOSES).optional(),
+  required: z.boolean().optional(),
+  rules: z.array(consentRule).max(50).optional(),
+});
+export type ConsentDefinitionBodyType = z.infer<typeof ConsentDefinitionBody>;

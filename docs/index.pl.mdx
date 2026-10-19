@@ -8,6 +8,9 @@ sprzedaje konsumentom w Polsce (a na tych samych zasadach także w innych krajac
 UE). Przechowuje dane i prowadzi procesy, których prawo konsumenckie oczekuje od
 zaplecza sklepu, a frontowi sklepu oddaje wszystko, co trzeba pokazać klientowi.
 
+Plugin jest headless: nie zawiera kodu frontu, a wszystko, czego front potrzebuje,
+jest w Store API opisanym w [Kontrakcie API dla frontu](./frontend-api.pl.mdx).
+
 > **To nie jest porada prawna.** Plugin wspiera zgodność z przepisami, ale jej nie
 > gwarantuje. Etykiety, regulamin, pouczenie o odstąpieniu i każda decyzja z listy
 > [otwartych pytań prawnych](./legal.pl.mdx) wymagają sprawdzenia przez prawnika.
@@ -22,6 +25,7 @@ zaplecza sklepu, a frontowi sklepu oddaje wszystko, co trzeba pokazać klientowi
 | Cena jednostkowa | Przechowuje ilość netto, jednostkę i wyłączenia dla wariantu, liczy cenę jednostkową z bieżącej ceny. Zob. [Ceny jednostkowe](./unit-prices.pl.mdx). |
 | Informacje GPSR | Producenci i osoby odpowiedzialne w UE jako wspólne rekordy, ostrzeżenia po polsku, lista braków. Zob. [Bezpieczeństwo produktu](./product-safety.pl.mdx). |
 | Funkcja odstąpienia od umowy (dyrektywa 2023/2673) | Dwuetapowy proces w Store API, uprawnienie i termin dla każdej pozycji, potwierdzenie na trwałym nośniku, rejestr w panelu. Zob. [Odstąpienie](./withdrawal.pl.mdx). |
+| Zgody przy zamówieniu | Zgody dobierane według koszyka, egzekwowane przy finalizacji, zamrażane dosłownie na zamówieniu. Zob. [Zgody przy zamówieniu](./consents.pl.mdx). |
 | Opinie i personalizacja cen | Edytowalne teksty udostępniane przez Store API. Zob. [Informacje dla konsumenta](./disclosures.pl.mdx). |
 
 Czego plugin nie robi: nie renderuje niczego w sklepie, nie rozstrzyga, czy
@@ -82,7 +86,7 @@ To samo w ciągu godziny zrobi cogodzinny przegląd. Wszystkie opcje opisuje str
 - **Strona produktu**: karta zgodności (GPSR, traktowanie obniżek, wyjątek od
   prawa odstąpienia, ceny jednostkowe wariantów) i karta historii cen (wykres,
   tabela, cena odniesienia, ceny zewnętrzne).
-- **Strona zamówienia**: odstąpienia złożone dla zamówienia.
+- **Strona zamówienia**: zgody klienta i odstąpienia złożone dla zamówienia.
 - **Odstąpienia** (menu boczne): rejestr wszystkich oświadczeń.
 - **Ustawienia > Zgodność konsumencka**: teksty informacji, producenci i osoby
   odpowiedzialne, produkty z brakami GPSR, stan historii cen.

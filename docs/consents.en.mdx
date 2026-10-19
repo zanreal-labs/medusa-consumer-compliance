@@ -1,0 +1,105 @@
+---
+title: Checkout consents
+description: Consents the customer gives at checkout, chosen by the cart contents, enforced server-side when the cart is completed, and frozen verbatim onto the order as proof.
+---
+
+Some orders cannot be placed without a consent. A store that sells licence keys
+(ESD codes) delivers them at once, and the right of withdrawal only disappears
+if the customer expressly consented to that and acknowledged losing the right
+(art. 38 ust. 1 pkt 13 of the consumer rights act). We do not accept such an
+order without that consent, just as Allegro does not. Other consents, such as
+accepting the terms, may apply to every order.
+
+## Definitions
+
+**Settings > Consumer compliance > Checkout consents** holds the definitions:
+
+| Field | Meaning |
+| --- | --- |
+| Key | Stable identifier sent by the frontend, for example `digital_immediate_delivery`. Never changes. |
+| Text (PL, EN) | Exactly the words the customer sees and accepts. |
+| Linked document | Optional URL and link text, for example the terms. |
+| Required | A required consent blocks completing the cart until accepted. |
+| Active | Inactive consents are never shown. |
+| Purpose | `digital_content_withdrawal_waiver` marks the art. 38 ust. 1 pkt 13 consent; accepting it is what lifts the right of withdrawal for the lines it covered. |
+| Rules | When the consent applies to a cart (below). |
+
+Changing the text or the link creates a **new version**. Earlier versions are
+kept with their text, and so is every acceptance. When a document is linked,
+the plugin downloads it on save and stores its SHA-256 with the version, so an
+order can show which version of the terms was in force. A document that cannot
+be fetched is saved without a hash.
+
+### The seeded consent
+
+On first use the plugin creates `digital_immediate_delivery`, required, matching
+products whose metadata has `is_digital_content: true`:
+
+> Wyrażam zgodę na rozpoczęcie dostarczania treści cyfrowej (kodu) przed upływem
+> terminu do odstąpienia od umowy. Przyjmuję do wiadomości, że po dostarczeniu
+> treści cyfrowej utracę prawo odstąpienia od umowy.
+
+> I consent to the supply of the digital content (code) starting before the
+> withdrawal period ends. I acknowledge that once the digital content has been
+> supplied, I lose my right to withdraw from the contract.
+
+The first sentence is the express and prior consent, the second the
+acknowledgement, the two elements art. 38 ust. 1 pkt 13 requires. It is created
+once; editing or deleting it later is respected.
+
+## Rules
+
+A consent applies to a cart when **any** of its rules matches at least one line:
+
+| Rule | Matches a line when |
+| --- | --- |
+| `always` | Always (every cart). |
+| `product_flag` | The product's metadata key is set (`true`, `1`, `"true"`, `"yes"`, `"tak"`). |
+| `product` | The product id is listed. |
+| `product_type` | The product type id is listed. |
+| `product_tag` | One of the product's tag ids is listed. |
+| `collection` | The collection id is listed. |
+| `category` | One of the product's category ids is listed. |
+
+A definition with no rules is never shown. For the digital consent the matched
+lines matter: in a mixed cart only those products lose the right of withdrawal.
+
+## Enforcement
+
+Enforcement is on the server, in the `validate` hook of Medusa's
+`completeCartWorkflow`, so `POST /store/carts/:id/complete` fails before anything
+is reserved or charged when a required consent that applies to the cart is
+missing (`consent_required`) or was accepted in an older version
+(`consent_version_outdated`). The frontend cannot skip it. Medusa allows one
+handler per workflow hook, so no other code in the backend may register
+`completeCartWorkflow.hooks.validate`; today nothing else does.
+
+## Snapshot on the order
+
+When the cart becomes an order (`order.placed`), the plugin freezes every
+accepted consent onto the order in its own table: the full text as rendered,
+the locale, the version, whether it was required, the linked document URL and
+its hash, the time, and the client's IP and user agent. These rows cannot be
+changed or deleted, so editing a definition later never changes what an order
+shows. For the digital consent it also writes `digital_content_consent_at` and
+`digital_content_consent_product_ids` to the order metadata.
+
+The order page in the admin shows them in the **Zgody klienta** widget, verbatim.
+`GET /admin/consumer-compliance/orders/:id/consents` returns them for one order,
+and `GET /admin/consumer-compliance/order-consents?format=csv` exports them. The
+withdrawal acknowledgement e-mail quotes them.
+
+**Confirmation on a durable medium.** Art. 38 ust. 1 pkt 13 also requires the
+trader to confirm the consent on a durable medium (art. 21 ust. 1). The order
+confirmation e-mail, sent by the backend, should quote the accepted consent; the
+snapshot gives it the exact text.
+
+## Allegro and other marketplaces
+
+Allegro collects its own consents and runs its own withdrawal process. Orders
+imported by medusa-allegro are created with `createOrderWorkflow`, not through a
+cart, so the complete-cart enforcement never runs for them. The plugin
+recognises them by `metadata.allegro_checkout_form_id` (or by a sales channel
+in `externalSalesChannelIds`) and leaves them alone: no snapshot, no metadata
+write, no missing-consent flag; the admin widget says "Zgody zbierane przez
+Allegro" and the withdrawal lookup answers `external_marketplace_order`.

@@ -1,5 +1,5 @@
 {
   "title": "Zgodność konsumencka",
   "description": "@zanreal/medusa-consumer-compliance wspiera obowiązki sklepu internetowego na Medusie v2 wynikające z prawa konsumenckiego UE i Polski: historia cen Omnibus, ceny jednostkowe, dane bezpieczeństwa GPSR, funkcja odstąpienia od umowy oraz informacje o opiniach i personalizacji cen.",
-  "pages": ["index", "omnibus", "unit-prices", "product-safety", "withdrawal", "disclosures", "store-api", "storefront", "options", "legal"]
+  "pages": ["index", "omnibus", "unit-prices", "product-safety", "withdrawal", "disclosures", "consents", "store-api", "frontend-api", "options", "legal"]
 }

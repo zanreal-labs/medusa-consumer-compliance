@@ -8,6 +8,8 @@ import type ConsumerComplianceModuleService from "../../modules/consumer-complia
 import type { WithdrawalException } from "../../modules/consumer-compliance/types";
 import type { WithdrawalOrderFacts, WithdrawalOrderItem } from "../../modules/consumer-compliance/lib/withdrawal";
 import type { QueryGraph } from "./catalog";
+import { isExternalMarketplaceOrder } from "../../modules/consumer-compliance/lib/external";
+import type { ExternalMarketplace } from "../../modules/consumer-compliance/lib/external";
 
 export interface LoadedOrder {
   id: string;
@@ -17,6 +19,8 @@ export interface LoadedOrder {
   customer_name: string | null;
   facts: WithdrawalOrderFacts;
   items: WithdrawalOrderItem[];
+  /** Set for marketplace orders (Allegro): the plugin does not handle them. */
+  external: ExternalMarketplace | null;
 }
 
 const ORDER_FIELDS = [
@@ -28,6 +32,7 @@ const ORDER_FIELDS = [
   "canceled_at",
   "status",
   "metadata",
+  "sales_channel_id",
   "items.id",
   "items.title",
   "items.product_title",
@@ -56,7 +61,13 @@ function itemTitle(row: Record<string, unknown>): string {
 }
 
 function parseConsent(metadata: unknown, key: string): Date | null {
-  const raw = (metadata as Record<string, unknown> | null | undefined)?.[key];
+  return parseDate((metadata as Record<string, unknown> | null | undefined)?.[key]);
+}
+
+export function parseDate(raw: unknown): Date | null {
+  if (raw instanceof Date) {
+    return Number.isNaN(raw.getTime()) ? null : raw;
+  }
   if (typeof raw !== "string" && typeof raw !== "number") {
     return null;
   }
@@ -95,6 +106,31 @@ export async function loadOrder(
   const fulfillments = ((order.fulfillments as Record<string, unknown>[] | null) ?? []).filter(
     (row) => !row.canceled_at && row.requires_shipping !== false,
   );
+  const external = isExternalMarketplaceOrder(
+    { metadata: (order.metadata as Record<string, unknown> | null) ?? null, sales_channel_id: (order.sales_channel_id as string | null) ?? null },
+    options,
+  );
+
+  // The consent behind the digital content exception, most trustworthy first:
+  // the immutable snapshot taken at checkout, then the order metadata (orders
+  // created elsewhere, or a snapshot not written yet).
+  let consentAt: Date | null = null;
+  let consentProducts: string[] | null = null;
+  if (!external) {
+    const snapshot = (await service.listOrderConsents(
+      { order_id: order.id as string, purpose: "digital_content_withdrawal_waiver" },
+      { take: 1 },
+    )) as unknown as { accepted_at: string | Date; covered_product_ids: string[] | null }[];
+    if (snapshot[0]) {
+      consentAt = parseDate(snapshot[0].accepted_at);
+      consentProducts = snapshot[0].covered_product_ids ?? [];
+    } else {
+      consentAt = parseConsent(order.metadata, options.withdrawal.digitalConsentMetadataKey);
+      const ids = (order.metadata as Record<string, unknown> | null)?.digital_content_consent_product_ids;
+      consentProducts = Array.isArray(ids) ? ids.map(String) : null;
+    }
+  }
+
   const address = order.shipping_address as { first_name?: string | null; last_name?: string | null } | null;
   const name = [address?.first_name, address?.last_name].filter(Boolean).join(" ").trim();
 
@@ -103,10 +139,12 @@ export async function loadOrder(
     customer_name: name || null,
     display_id: String(order.display_id),
     email: (order.email as string | null) ?? null,
+    external,
     facts: {
       canceled: !!order.canceled_at || order.status === "canceled",
       deliveries: fulfillments.map((row) => (row.delivered_at ? new Date(row.delivered_at as string) : null)),
-      digital_consent_at: parseConsent(order.metadata, options.withdrawal.digitalConsentMetadataKey),
+      digital_consent_at: consentAt,
+      digital_consent_product_ids: consentProducts,
       placed_at: new Date(order.created_at as string),
     },
     id: order.id as string,

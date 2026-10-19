@@ -23,6 +23,8 @@ export interface AcknowledgementInput {
   whole_order: boolean;
   statement: string | null;
   seller: { name: string; address: string; email: string };
+  /** Consents frozen onto the order at checkout, quoted verbatim as proof. */
+  consents?: { text: string; version: number; accepted_at: Date; locale: string | null }[];
 }
 
 export interface RenderedAcknowledgement {
@@ -63,6 +65,8 @@ const COPY = {
     submitted: "Submitted at",
     whole: "The whole order",
     durable: "Keep this e-mail: it is the confirmation of your withdrawal on a durable medium.",
+    consents: "Consents you gave with this order",
+    consentLine: (version: number, at: string) => `version ${version}, accepted ${at}`,
     defaultStatement: (order: string) => `I hereby give notice that I withdraw from my contract of sale of the goods in order ${order}.`,
   },
   pl: {
@@ -79,6 +83,8 @@ const COPY = {
     submitted: "Data i godzina złożenia",
     whole: "Całe zamówienie",
     durable: "Zachowaj tę wiadomość: to potwierdzenie odstąpienia na trwałym nośniku.",
+    consents: "Zgody udzielone przy tym zamówieniu",
+    consentLine: (version: number, at: string) => `wersja ${version}, zaakceptowano ${at}`,
     defaultStatement: (order: string) => `Niniejszym informuję o moim odstąpieniu od umowy sprzedaży towarów z zamówienia ${order}.`,
   },
 } as const;
@@ -117,6 +123,13 @@ export function renderAcknowledgement(input: AcknowledgementInput): RenderedAckn
     "",
     copy.durable,
   ];
+  const consents = input.consents ?? [];
+  if (consents.length > 0) {
+    textLines.push("", `${copy.consents}:`);
+    for (const consent of consents) {
+      textLines.push(`- "${consent.text}" (${copy.consentLine(consent.version, formatTimestamp(consent.accepted_at, language))})`);
+    }
+  }
   if (sellerLines.length > 0) {
     textLines.push("", `${copy.seller}:`, ...sellerLines);
   }
@@ -134,6 +147,14 @@ export function renderAcknowledgement(input: AcknowledgementInput): RenderedAckn
     `<ul>${itemLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`,
     `<p>${escapeHtml(copy.next)}</p>`,
     `<p>${escapeHtml(copy.durable)}</p>`,
+    consents.length > 0
+      ? `<p><strong>${escapeHtml(copy.consents)}:</strong></p><ul>${consents
+          .map(
+            (consent) =>
+              `<li>&bdquo;${escapeHtml(consent.text)}&rdquo; (${escapeHtml(copy.consentLine(consent.version, formatTimestamp(consent.accepted_at, language)))})</li>`,
+          )
+          .join("")}</ul>`
+      : "",
     sellerLines.length > 0
       ? `<p><strong>${escapeHtml(copy.seller)}:</strong><br>${sellerLines.map(escapeHtml).join("<br>")}</p>`
       : "",

@@ -1,0 +1,1829 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "@zanreal/medusa-consumer-compliance Store API",
+    "version": "0.1.0",
+    "description": "Store API routes added by the plugin, plus the cart completion behaviour it enforces. Not legal advice."
+  },
+  "servers": [
+    {
+      "url": "https://your-medusa-backend"
+    }
+  ],
+  "paths": {
+    "/store/products/{id}/compliance": {
+      "get": {
+        "summary": "Product page compliance data",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pricing context: region (its currency). Or pass currency_code."
+          },
+          {
+            "name": "currency_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pricing context without a region."
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "pl or en."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "product_id": {
+                      "type": "string"
+                    },
+                    "variants": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/VariantCompliance"
+                      }
+                    },
+                    "safety": {
+                      "$ref": "#/components/schemas/Safety"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or not visible product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/consumer-compliance/variants": {
+      "get": {
+        "summary": "Compliance data for up to 100 variants",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma separated variant ids"
+          },
+          {
+            "name": "region_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pricing context: region (its currency). Or pass currency_code."
+          },
+          {
+            "name": "currency_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pricing context without a region."
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "pl or en."
+          },
+          {
+            "name": "reduction_started_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ISO date: evaluate a reduction that is not a price list (discount code campaign)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "variants": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/VariantCompliance"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/consumer-compliance/variants/{id}/omnibus": {
+      "get": {
+        "summary": "One variant's Omnibus block",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pricing context: region (its currency). Or pass currency_code."
+          },
+          {
+            "name": "currency_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pricing context without a region."
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "pl or en."
+          },
+          {
+            "name": "reduction_started_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ISO date, as above."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "variant_id": {
+                      "type": "string"
+                    },
+                    "currency_code": {
+                      "type": "string"
+                    },
+                    "tax_inclusive": {
+                      "oneOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "omnibus": {
+                      "$ref": "#/components/schemas/Omnibus"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown variant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/consumer-compliance/disclosures": {
+      "get": {
+        "summary": "Disclosure texts and withdrawal labels",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "pl or en."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Disclosures"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/consumer-compliance/carts/{id}/consents": {
+      "get": {
+        "summary": "Consents that apply to the cart",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "pl or en."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartConsents"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown cart",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Record acceptances on the cart",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptConsents"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartConsents"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Consent does not apply, cart completed, or `consent_version_outdated`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/carts/{id}/complete": {
+      "post": {
+        "summary": "Medusa cart completion (blocked by this plugin when consents are missing)",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Medusa's response: { type: 'order', order } or { type: 'cart', cart, error }"
+          },
+          "400": {
+            "description": "`consent_required` or `consent_version_outdated`; message ends with the consent keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/consumer-compliance/withdrawals/lookup": {
+      "post": {
+        "summary": "Withdrawal eligibility for an order",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderReference"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithdrawalLookup"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No order matches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/consumer-compliance/withdrawals": {
+      "post": {
+        "summary": "Withdrawal step one: the statement",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created, pending confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "withdrawal": {
+                      "$ref": "#/components/schemas/Withdrawal"
+                    },
+                    "confirmation_token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not allowed (excluded items, canceled order, `external_marketplace_order`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No order matches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "The logged-in customer's withdrawals",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "withdrawals": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Withdrawal"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/consumer-compliance/withdrawals/{id}/confirm": {
+      "post": {
+        "summary": "Withdrawal step two: submission",
+        "parameters": [
+          {
+            "name": "x-publishable-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "withdrawal": {
+                      "$ref": "#/components/schemas/Withdrawal"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, wrong token or already confirmed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "type",
+          "message"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "description": "Machine-readable code, see the list in docs/frontend-api.en.mdx.",
+            "examples": [
+              "consent_required",
+              "consent_version_outdated",
+              "external_marketplace_order"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Omnibus": {
+        "type": "object",
+        "required": [
+          "status",
+          "is_reduced",
+          "reference_price",
+          "reference_label",
+          "reduction_percent"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "no_price",
+              "exempt"
+            ]
+          },
+          "current_amount": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "original_amount": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_reduced": {
+            "type": "boolean"
+          },
+          "price_list_id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reduction_started_at": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reference_price": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reference_basis": {
+            "oneOf": [
+              {
+                "enum": [
+                  "lowest_in_window",
+                  "lowest_since_first_offered",
+                  "price_before_first_reduction"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reference_label": {
+            "oneOf": [
+              {
+                "enum": [
+                  "lowest_30_days",
+                  "lowest_since_introduction",
+                  "price_before_reduction"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reference_label_text": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "window_days": {
+            "type": "integer"
+          },
+          "window_start": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "window_end": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "offered_less_than_window": {
+            "type": "boolean"
+          },
+          "history_incomplete": {
+            "type": "boolean"
+          },
+          "reduction_percent": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reference_not_higher": {
+            "type": "boolean"
+          },
+          "lowest_price_in_window": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "oneOf": [
+              {
+                "enum": [
+                  "no_prior_price"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "UnitPrice": {
+        "type": "object",
+        "required": [
+          "amount",
+          "reference_unit",
+          "reference_label"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number"
+          },
+          "reference_unit": {
+            "enum": [
+              "kg",
+              "per_100g",
+              "l",
+              "per_100ml",
+              "m",
+              "m2",
+              "m3",
+              "piece",
+              "per_10_pieces",
+              "per_100_pieces"
+            ]
+          },
+          "reference_label": {
+            "type": "string"
+          },
+          "based_on": {
+            "enum": [
+              "net_quantity",
+              "drained_quantity"
+            ]
+          },
+          "same_as_price": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VariantCompliance": {
+        "type": "object",
+        "required": [
+          "variant_id",
+          "currency_code",
+          "omnibus"
+        ],
+        "properties": {
+          "variant_id": {
+            "type": "string"
+          },
+          "currency_code": {
+            "type": "string"
+          },
+          "tax_inclusive": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "omnibus": {
+            "$ref": "#/components/schemas/Omnibus"
+          },
+          "unit_price": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UnitPrice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deposit": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "currency_code": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Operator": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "trade_name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "postal_address": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "country_code": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "email": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Safety": {
+        "type": "object",
+        "required": [
+          "applicable"
+        ],
+        "properties": {
+          "applicable": {
+            "type": "boolean"
+          },
+          "manufacturer": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Operator"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "responsible_person": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Operator"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "product_identifier": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "variant_identifiers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "variant_id": {
+                  "type": "string"
+                },
+                "sku": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "barcode": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "ean": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "upc": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "warnings": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "safety_information": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "safety_document_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessibility_notes": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Disclosures": {
+        "type": "object",
+        "properties": {
+          "reviews": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "text": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "personalised_pricing": {
+            "type": "object",
+            "properties": {
+              "used": {
+                "type": "boolean"
+              },
+              "text": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "withdrawal": {
+            "type": "object",
+            "properties": {
+              "period_days": {
+                "type": "integer"
+              },
+              "labels": {
+                "type": "object",
+                "properties": {
+                  "entry": {
+                    "type": "string"
+                  },
+                  "confirm": {
+                    "type": "string"
+                  }
+                }
+              },
+              "text": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "omnibus_note": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "CartConsent": {
+        "type": "object",
+        "required": [
+          "key",
+          "version",
+          "required",
+          "text",
+          "status",
+          "line_item_ids"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "purpose": {
+            "enum": [
+              "generic",
+              "digital_content_withdrawal_waiver"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "description": "Verbatim text to render next to the checkbox."
+          },
+          "link": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "line_item_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "enum": [
+              "missing",
+              "outdated",
+              "accepted"
+            ]
+          },
+          "accepted_version": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "accepted_at": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "CartConsents": {
+        "type": "object",
+        "required": [
+          "cart_id",
+          "can_complete",
+          "blocking",
+          "consents"
+        ],
+        "properties": {
+          "cart_id": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "can_complete": {
+            "type": "boolean"
+          },
+          "blocking": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "enum": [
+                      "consent_required",
+                      "consent_version_outdated"
+                    ]
+                  },
+                  "keys": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "consents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartConsent"
+            }
+          }
+        }
+      },
+      "AcceptConsents": {
+        "type": "object",
+        "required": [
+          "acceptances"
+        ],
+        "properties": {
+          "locale": {
+            "type": "string"
+          },
+          "acceptances": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "version"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "WithdrawalItem": {
+        "type": "object",
+        "properties": {
+          "line_item_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "eligible": {
+            "type": "boolean"
+          },
+          "exception": {
+            "type": "string"
+          },
+          "excluded_reason": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "legal_basis": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "pl",
+                  "en"
+                ],
+                "properties": {
+                  "pl": {
+                    "type": "string"
+                  },
+                  "en": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "basis": {
+            "enum": [
+              "delivery",
+              "contract_conclusion",
+              "awaiting_delivery"
+            ]
+          },
+          "deadline_at": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "within_period": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WithdrawalAssessment": {
+        "type": "object",
+        "properties": {
+          "right_of_withdrawal": {
+            "enum": [
+              "applies",
+              "excluded_digital_consent",
+              "none_eligible"
+            ]
+          },
+          "legal_basis": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "pl",
+                  "en"
+                ],
+                "properties": {
+                  "pl": {
+                    "type": "string"
+                  },
+                  "en": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "digital_consent_missing": {
+            "type": "boolean"
+          },
+          "digital_consent_at": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WithdrawalItem"
+            }
+          },
+          "deadline_at": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "any_eligible": {
+            "type": "boolean"
+          },
+          "any_within_period": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ExternalMarketplaceOrder": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "const": "external_marketplace_order"
+          },
+          "marketplace": {
+            "enum": [
+              "allegro",
+              "external"
+            ]
+          },
+          "matched_by": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "WithdrawalLookup": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "display_id": {
+                "type": "string"
+              },
+              "placed_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "canceled": {
+                "type": "boolean"
+              }
+            }
+          },
+          "assessment": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WithdrawalAssessment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "external_marketplace_order": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ExternalMarketplaceOrder"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "OrderReference": {
+        "type": "object",
+        "properties": {
+          "display_id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "order_id": {
+            "type": "string"
+          }
+        }
+      },
+      "WithdrawalRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/OrderReference"
+          },
+          {
+            "type": "object",
+            "required": [
+              "customer_name",
+              "contact_email"
+            ],
+            "properties": {
+              "customer_name": {
+                "type": "string"
+              },
+              "contact_email": {
+                "type": "string",
+                "format": "email"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "line_item_id",
+                    "quantity"
+                  ],
+                  "properties": {
+                    "line_item_id": {
+                      "type": "string"
+                    },
+                    "quantity": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "statement": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "locale": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "Withdrawal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending_confirmation",
+              "confirmed",
+              "processed",
+              "rejected",
+              "expired"
+            ]
+          },
+          "order_display_id": {
+            "type": "string"
+          },
+          "customer_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line_item_id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "whole_order": {
+            "type": "boolean"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "submitted_at": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deadline_at": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "within_period": {
+            "type": "boolean"
+          },
+          "acknowledgement_sent_at": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confirmation_expires_at": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "customer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Medusa customer session or bearer token."
+      }
+    }
+  }
+}

@@ -29,8 +29,22 @@ export async function POST(
       order_id: body.order_id ?? null,
     },
   });
+  if (result.order.external) {
+    // Marketplace order (Allegro): its consents and withdrawals belong to the
+    // marketplace. Answer with a pointer instead of running this flow.
+    res.json({
+      assessment: null,
+      external_marketplace_order: {
+        ...result.order.external,
+        message: "This order was placed on an external marketplace. Withdrawal follows the marketplace's own process.",
+      },
+      order: { display_id: result.order.display_id, id: result.order.id },
+    });
+    return;
+  }
   res.json({
     assessment: result.assessment,
+    external_marketplace_order: null,
     order: {
       canceled: result.order.facts.canceled,
       display_id: result.order.display_id,
