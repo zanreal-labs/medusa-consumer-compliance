@@ -77,6 +77,13 @@ export interface ConsumerComplianceModuleOptions {
      * the reading more favourable to the consumer.
      */
     extendOverNonWorkingDays?: boolean;
+    /**
+     * The store sells only digital content not supplied on a tangible medium
+     * (for example ESD licence keys). Every order line is then treated as
+     * digital content for the withdrawal exception of art. 38 ust. 1 pkt 13,
+     * whatever the per-product classification says. Default false.
+     */
+    digitalOnly?: boolean;
     /** Order metadata key holding the timestamp of the consumer's consent to immediate digital delivery (art. 38 ust. 1 pkt 13). */
     digitalConsentMetadataKey?: string;
     /** Minutes a step-one request stays confirmable. Default 60. */
@@ -111,6 +118,7 @@ export interface ResolvedConsumerComplianceOptions {
     periodDays: number;
     rejectOutsidePeriod: boolean;
     extendOverNonWorkingDays: boolean;
+    digitalOnly: boolean;
     digitalConsentMetadataKey: string;
     confirmationTtlMinutes: number;
     notificationChannel: string;
@@ -151,6 +159,7 @@ export function resolveOptions(options?: ConsumerComplianceModuleOptions | null)
     withdrawal: {
       confirmationTtlMinutes: positiveInt(withdrawal.confirmationTtlMinutes, 60),
       digitalConsentMetadataKey: withdrawal.digitalConsentMetadataKey?.trim() || "digital_content_consent_at",
+      digitalOnly: withdrawal.digitalOnly === true,
       extendOverNonWorkingDays: withdrawal.extendOverNonWorkingDays !== false,
       merchantNotificationEmail: withdrawal.merchantNotificationEmail?.trim() || null,
       notificationChannel: withdrawal.notificationChannel?.trim() || "email",

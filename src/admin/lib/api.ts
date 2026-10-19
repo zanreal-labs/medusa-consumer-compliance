@@ -124,6 +124,8 @@ export interface Withdrawal {
   acknowledgement_error: string | null;
   handled_at: string | null;
   internal_note: string | null;
+  /** Assessment snapshot taken at step one. */
+  assessment: { digital_consent_missing?: boolean } | null;
 }
 
 const BASE = "/admin/consumer-compliance";

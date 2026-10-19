@@ -43,6 +43,10 @@ może użyć dowolnego swojego zamówienia. Zły e-mail i nieznane zamówienie d
 samą odpowiedź 404, więc wyszukiwania nie da się użyć do sprawdzania numerów
 zamówień. Trasy powinny być objęte limitem żądań.
 
+**To wybrana przez nas metoda identyfikacji (decyzja z 19 października 2026 r.):**
+numer zamówienia i e-mail uznajemy za wystarczające i nieuciążliwe, bez linku z
+tokenem ani dodatkowego kroku.
+
 ## Etykiety
 
 | Element | Polski | Angielski |
@@ -50,7 +54,9 @@ zamówień. Trasy powinny być objęte limitem żądań.
 | Wejście do funkcji (na elemencie, który ją uruchamia) | Odstąp od umowy tutaj | Withdraw from contract here |
 | Przycisk potwierdzenia | Potwierdź odstąpienie od umowy | Confirm withdrawal |
 
-Obie pochodzą z polskiej wersji dyrektywy i projektu ustawy, a
+To wartości domyślne i sklep zdecydował się używać ich bez zmian. Pochodzą z
+polskiej wersji dyrektywy i projektu UC169 (art. 30a ust. 3 i 6), więc **trzeba je
+sprawdzić ponownie po ogłoszeniu ustawy** w Dzienniku Ustaw. Endpoint
 `GET /store/consumer-compliance/disclosures` zwraca je jako `withdrawal.labels`.
 Uzasadnienie projektu dodaje: etykieta jest na samym przycisku, konsument może
 wybrać pozycje, wstępnie wypełnione dane muszą dać się zmienić, a konsument nie
@@ -92,6 +98,33 @@ wymagają faktów, których sklep nie widzi:
   natychmiastowe dostarczenie i przyjął do wiadomości utratę prawa. Zapisz tę
   chwilę jako datę ISO w metadanych zamówienia pod kluczem
   `digital_content_consent_at` (konfigurowalnym), gdy zamówienie zbiera zgodę.
+
+## Sklepy tylko z treściami cyfrowymi (klucze ESD)
+
+Sklep, który sprzedaje wyłącznie treści cyfrowe niedostarczane na nośniku
+materialnym, na przykład klucze licencyjne wysyłane e-mailem, ustawia
+`withdrawal.digitalOnly: true` (w naszym backendzie
+`CONSUMER_COMPLIANCE_DIGITAL_ONLY=true`). Każda pozycja zamówienia jest wtedy
+traktowana jako treść cyfrowa, niezależnie od klasyfikacji produktu, a termin
+biegnie od zawarcia umowy.
+
+Art. 38 ust. 1 pkt 13 wyłącza prawo odstąpienia **tylko** wtedy, gdy spełnianie
+świadczenia rozpoczęło się za wyraźną i uprzednią zgodą konsumenta,
+poinformowanego o utracie prawa, który przyjął to do wiadomości, a przedsiębiorca
+to potwierdził (art. 15 lub 21). Odpowiedź zależy więc od zamówienia:
+
+| Metadane zamówienia `digital_content_consent_at` | Odpowiedź wyszukiwania | Rejestr w panelu |
+| --- | --- | --- |
+| Są (znacznik czasu ISO) | `right_of_withdrawal: "excluded_digital_consent"` z `legal_basis` (treść przepisu po polsku i angielsku); etap pierwszy jest odrzucany z tym samym uzasadnieniem | Brak wpisu |
+| Brak | `right_of_withdrawal: "applies"`, `digital_consent_missing: true`; zwykłe 14 dni od daty zamówienia | Oznaczenie „Brak zgody na natychmiastowe dostarczenie” |
+
+**Zgodę musi zebrać ten, kto sprzedaje kody**: niezaznaczone domyślnie pole z
+informacją o utracie prawa, przed pokazaniem lub wysłaniem kodu, oraz zapis
+znacznika czasu w metadanych zamówienia. Dziś kody sprzedaje Allegro, a zamówienia
+z Allegro podlegają procesowi odstąpień i zgód Allegro; funkcja pluginu dotyczy
+zamówień z naszego własnego sklepu, którego jeszcze nie ma. Przyszły sklep musi
+zapisywać `digital_content_consent_at` przy zamówieniu, inaczej każde zamówienie
+zachowa 14-dniowe prawo odstąpienia.
 
 ## Potwierdzenie
 

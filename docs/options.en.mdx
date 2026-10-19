@@ -22,6 +22,7 @@ description: Every plugin option with its default and legal floor, the scheduled
       periodDays: 14,
       rejectOutsidePeriod: false,
       extendOverNonWorkingDays: true,
+      digitalOnly: false,
       digitalConsentMetadataKey: "digital_content_consent_at",
       confirmationTtlMinutes: 60,
       notificationChannel: "email",
@@ -45,6 +46,7 @@ description: Every plugin option with its default and legal floor, the scheduled
 | `withdrawal.periodDays` | `14` | Can be longer (a more generous policy), never shorter. |
 | `withdrawal.rejectOutsidePeriod` | `false` | `true` refuses late statements at the API instead of flagging them. |
 | `withdrawal.extendOverNonWorkingDays` | `true` | Art. 115 of the Civil Code. |
+| `withdrawal.digitalOnly` | `false` | Every order line is digital content (ESD codes). With consent recorded there is no right of withdrawal (art. 38 ust. 1 pkt 13); without it the 14-day right stands and the register flags it. See [Withdrawal](./withdrawal.en.mdx). |
 | `withdrawal.digitalConsentMetadataKey` | `digital_content_consent_at` | Order metadata key with the consent timestamp (art. 38 ust. 1 pkt 13). |
 | `withdrawal.confirmationTtlMinutes` | `60` | How long step one stays confirmable. |
 | `withdrawal.notificationChannel` | `email` | Channel for the acknowledgement. |

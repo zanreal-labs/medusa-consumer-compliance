@@ -274,7 +274,9 @@
       "updateError": "Could not update the withdrawal",
       "orderHeading": "Withdrawals",
       "wholeOrder": "The whole order",
-      "open": "Open in the register"
+      "open": "Open in the register",
+      "digitalConsentMissing": "No consent to immediate delivery",
+      "digitalConsentMissingHint": "Digital-only store, but this order has no recorded consent to immediate delivery of digital content. The art. 38 ust. 1 pkt 13 exception does not apply, so the ordinary 14-day right of withdrawal stands."
     },
     "withdrawalStatuses": {
       "pending_confirmation": "Awaiting confirmation",

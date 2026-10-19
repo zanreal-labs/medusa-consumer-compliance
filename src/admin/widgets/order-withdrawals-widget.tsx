@@ -48,6 +48,11 @@ const OrderWithdrawalsWidget = ({ data }: DetailWidgetProps<AdminOrder>) => {
           <Text size="small" className="text-ui-fg-subtle">
             {row.whole_order ? t("consumerCompliance.withdrawals.wholeOrder") : row.items.map((item) => `${item.title} x ${item.quantity}`).join(", ")}
           </Text>
+          {row.assessment?.digital_consent_missing ? (
+            <Text size="small" className="text-ui-fg-error">
+              {t("consumerCompliance.withdrawals.digitalConsentMissing")}
+            </Text>
+          ) : null}
           {!row.within_period ? (
             <Text size="small" className="text-ui-fg-error">
               {t("consumerCompliance.withdrawals.outsidePeriod")}

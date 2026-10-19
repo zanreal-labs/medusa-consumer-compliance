@@ -68,6 +68,20 @@ Państwo również wykonać prawo odstąpienia od umowy przez internet na stroni
 niezwłocznie potwierdzenie odstąpienia od umowy utrwalone na trwałym nośniku (na
 przykład pocztą elektroniczną), w tym jego treść oraz datę i godzinę złożenia."
 
+## Decisions taken (19 October 2026)
+
+- **Withdrawal function goes live with the draft labels** "Odstąp od umowy tutaj"
+  and "Potwierdź odstąpienie od umowy" once the plugin is enabled. They follow
+  draft UC169 (art. 30a ust. 3 and 6) and must be re-checked against the act as
+  published in Dziennik Ustaw.
+- **Guest identification**: order number plus the order e-mail is the chosen
+  method and is considered sufficient.
+- **The store sells ESD licence keys only** (`digitalOnly`). The right of
+  withdrawal is excluded under art. 38 ust. 1 pkt 13 only for orders that record
+  the consumer's express consent and acknowledgement; orders without it keep the
+  14-day right. The checkout that sells the codes must capture the consent;
+  Allegro orders follow Allegro's process.
+
 ## Compliance matrix
 
 | Obligation | Applies to a PL B2C e-shop? | What this plugin does | What the storefront must do | Manual or legal |
@@ -99,9 +113,9 @@ przykład pocztą elektroniczną), w tym jego treść oraz datę i godzinę zło
 These need an owner or lawyer decision; the plugin has a setting or a field for
 each, but cannot make the call.
 
-1. **Withdrawal function before Polish implementation:** ship now with the draft labels ("Odstąp od umowy tutaj" / "Potwierdź odstąpienie od umowy") or wait for the act? Recommendation: ship now behind a flag.
+1. **(Decided: yes, see above.) Withdrawal function before Polish implementation:** ship now with the draft labels ("Odstąp od umowy tutaj" / "Potwierdź odstąpienie od umowy") or wait for the act? Recommendation: ship now behind a flag.
 2. **Label wording:** use the exact statutory phrasing or an "equivalent unambiguous" variant? Recommendation: exact phrasing to avoid disputes.
-3. **Guest orders:** acceptable identification method on the public withdrawal route (order number + e-mail, magic link)? Must not be burdensome.
+3. **(Decided: order number and e-mail.) Guest orders:** acceptable identification method on the public withdrawal route (order number + e-mail, magic link)? Must not be burdensome.
 4. **Optional "reason for return" field** in the withdrawal form: allowed if optional? Retention offers between the two steps: avoid?
 5. **Partial withdrawal and outbound delivery cost:** refund a share of delivery when only some items are withdrawn?
 6. **Omnibus history retention period** and whether to keep evidence snapshots of displayed reference prices.

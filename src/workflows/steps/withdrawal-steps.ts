@@ -85,6 +85,7 @@ export const assessWithdrawalOrderStep = createStep(
     const options = service.resolvedOptions.withdrawal;
     const order = await resolveOwnedOrder(container, input);
     const assessment = assessWithdrawal({
+      digitalOnly: options.digitalOnly,
       extendOverNonWorkingDays: options.extendOverNonWorkingDays,
       facts: order.facts,
       items: order.items,
@@ -151,7 +152,12 @@ export const createWithdrawalStep = createStep(
       wholeOrder = true;
     }
     if (selected.length === 0) {
-      throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "No item of this order can be withdrawn from.");
+      throw new MedusaError(
+        MedusaError.Types.NOT_ALLOWED,
+        assessment.right_of_withdrawal === "excluded_digital_consent"
+          ? `No right of withdrawal: ${assessment.legal_basis?.en ?? ""}`
+          : "No item of this order can be withdrawn from.",
+      );
     }
 
     const relevant = selected.map((entry) => byId.get(entry.line_item_id)).filter((item) => !!item);

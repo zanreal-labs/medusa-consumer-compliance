@@ -22,6 +22,7 @@ description: Każda opcja pluginu z wartością domyślną i progiem ustawowym, 
       periodDays: 14,
       rejectOutsidePeriod: false,
       extendOverNonWorkingDays: true,
+      digitalOnly: false,
       digitalConsentMetadataKey: "digital_content_consent_at",
       confirmationTtlMinutes: 60,
       notificationChannel: "email",
@@ -45,6 +46,7 @@ description: Każda opcja pluginu z wartością domyślną i progiem ustawowym, 
 | `withdrawal.periodDays` | `14` | Może być dłuższy (hojniejsza polityka), nigdy krótszy. |
 | `withdrawal.rejectOutsidePeriod` | `false` | `true` odrzuca spóźnione oświadczenia w API zamiast je oznaczać. |
 | `withdrawal.extendOverNonWorkingDays` | `true` | Art. 115 Kodeksu cywilnego. |
+| `withdrawal.digitalOnly` | `false` | Każda pozycja to treść cyfrowa (kody ESD). Przy zapisanej zgodzie prawo odstąpienia nie przysługuje (art. 38 ust. 1 pkt 13); bez niej obowiązuje 14 dni, a rejestr to oznacza. Zob. [Odstąpienie](./withdrawal.pl.mdx). |
 | `withdrawal.digitalConsentMetadataKey` | `digital_content_consent_at` | Klucz metadanych zamówienia z chwilą zgody (art. 38 ust. 1 pkt 13). |
 | `withdrawal.confirmationTtlMinutes` | `60` | Jak długo można potwierdzić etap pierwszy. |
 | `withdrawal.notificationChannel` | `email` | Kanał potwierdzenia. |
