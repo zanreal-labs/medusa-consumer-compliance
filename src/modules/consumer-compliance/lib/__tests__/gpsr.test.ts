@@ -5,7 +5,7 @@ import type { ProductSafetyInput } from "../gpsr";
 const complete: ProductSafetyInput = {
   has_image: true,
   has_variant_identifier: true,
-  manufacturer: { country_code: "pl", email: "kontakt@producent.pl", name: "Producent sp. z o.o.", postal_address: "ul. Prosta 1, 00-001 Warszawa" },
+  manufacturer: { country_code: "pl", email: "kontakt@producent.example", name: "Producent sp. z o.o.", postal_address: "ul. Prosta 1, 00-001 Warszawa" },
   no_warnings_required: false,
   not_applicable: false,
   product_identifier: "Model X-1",

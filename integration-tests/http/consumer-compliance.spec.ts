@@ -84,7 +84,7 @@ medusaIntegrationTestRunner({
         await service.createVariantUnitPricings({ net_quantity: 1.7, net_unit: "l", product_id: product.id, variant_id: variant.id });
         const maker = await service.createEconomicOperators({
           country_code: "pl",
-          email: "kontakt@producent.pl",
+          email: "kontakt@producent.example",
           name: "Producent sp. z o.o.",
           postal_address: "ul. Prosta 1, Warszawa",
           role: "manufacturer",

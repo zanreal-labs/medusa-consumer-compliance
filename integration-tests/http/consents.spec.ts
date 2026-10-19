@@ -200,7 +200,7 @@ medusaIntegrationTestRunner({
         // Exactly how medusa-allegro creates an order: createOrderWorkflow, no cart, Allegro metadata.
         const { result: created } = await createOrderWorkflow(container).run({
           input: {
-            email: "kupujacy@allegromail.pl",
+            email: "buyer@example.com",
             items: [{ quantity: 1, requires_shipping: false, title: "Antivirus licence", unit_price: 0, variant_id: licence.variants[0].id }],
             metadata: { allegro_checkout_form_id: "29c3d7d0-0000-11ef-8a8e-000000000000" },
             region_id: region.id,
@@ -223,7 +223,7 @@ medusaIntegrationTestRunner({
         // The withdrawal function points to Allegro instead of running.
         const lookup = await api.post(
           "/store/consumer-compliance/withdrawals/lookup",
-          { display_id: created.display_id, email: "kupujacy@allegromail.pl" },
+          { display_id: created.display_id, email: "buyer@example.com" },
           store,
         );
         expect(lookup.data.assessment).toBeNull();
@@ -231,7 +231,7 @@ medusaIntegrationTestRunner({
         const refused = await api
           .post(
             "/store/consumer-compliance/withdrawals",
-            { contact_email: "kupujacy@allegromail.pl", customer_name: "Kupujący", display_id: created.display_id, email: "kupujacy@allegromail.pl" },
+            { contact_email: "buyer@example.com", customer_name: "Kupujący", display_id: created.display_id, email: "buyer@example.com" },
             store,
           )
           .catch(failed);
