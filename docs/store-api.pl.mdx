@@ -182,6 +182,10 @@ potwierdzenie (`acknowledgement_sent_at`). Zły token, nieznany identyfikator i
 już potwierdzone żądanie dają 404. Wygasłe żądanie daje 400 i trzeba zacząć od
 nowa.
 
+Potwierdzenie zawsze trafia na e-mail z zamówienia, nie na `contact_email`.
+Jedno zamówienie przyjmuje najwyżej 3 niepotwierdzone żądania naraz i żadnego
+nowego po odstąpieniu od całego zamówienia (oba przypadki dają 400).
+
 `GET /store/consumer-compliance/withdrawals` (tylko zalogowany klient)
 
 Złożone odstąpienia klienta.

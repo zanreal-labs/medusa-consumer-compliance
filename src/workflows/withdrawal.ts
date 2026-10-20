@@ -13,7 +13,11 @@ export const WITHDRAWAL_CONFIRMED_EVENT = "consumer_compliance.withdrawal.confir
 
 export interface RequestWithdrawalInput extends OrderReference {
   customer_name: string;
-  /** Where the acknowledgement goes (the "electronic means" of art. 11a(2)(c)). */
+  /**
+   * Contact address the consumer typed in. Kept for the record only: the
+   * acknowledgement always goes to the e-mail on the order (see
+   * `createWithdrawalStep`), so this field cannot redirect mail.
+   */
   contact_email: string;
   locale?: string | null;
   items?: { line_item_id: string; quantity: number }[] | null;

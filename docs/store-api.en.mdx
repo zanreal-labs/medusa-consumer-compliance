@@ -197,6 +197,10 @@ sent (`acknowledgement_sent_at`). A wrong token, an unknown id and an already
 confirmed request all answer 404. An expired request answers 400 and must be
 started again.
 
+The acknowledgement is always sent to the e-mail on the order, not to
+`contact_email`. An order accepts at most 3 unconfirmed requests at a time, and
+no new request once the whole order has been withdrawn (both answer 400).
+
 `GET /store/consumer-compliance/withdrawals` (logged-in customer only)
 
 The customer's submitted withdrawals.

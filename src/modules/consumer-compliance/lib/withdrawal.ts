@@ -233,3 +233,37 @@ export function sameEmail(a: string | null | undefined, b: string | null | undef
   }
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
+
+/** At most this many unconfirmed requests may be open on one order at a time. */
+export const MAX_PENDING_WITHDRAWALS_PER_ORDER = 3;
+
+export interface ExistingWithdrawal {
+  status: string;
+  whole_order: boolean;
+  confirmation_expires_at: Date | string | null;
+}
+
+/**
+ * Why a new withdrawal request on an order must be refused, or `null` when it
+ * may be created.
+ *
+ * The guest flow is reachable from the internet with only an order number and
+ * the e-mail on the order, and every request ends in an acknowledgement e-mail,
+ * so the number of requests per order has to be bounded: otherwise one known
+ * order is an unlimited mail cannon and an unbounded table writer.
+ */
+export function withdrawalCreationBlock(
+  existing: ExistingWithdrawal[],
+  now: Date,
+  maxPending: number = MAX_PENDING_WITHDRAWALS_PER_ORDER,
+): "already_withdrawn" | "too_many_pending" | null {
+  if (existing.some((row) => row.whole_order && (row.status === "confirmed" || row.status === "processed"))) {
+    return "already_withdrawn";
+  }
+  const openPending = existing.filter(
+    (row) =>
+      row.status === "pending_confirmation" &&
+      (!row.confirmation_expires_at || new Date(row.confirmation_expires_at).getTime() > now.getTime()),
+  ).length;
+  return openPending >= maxPending ? "too_many_pending" : null;
+}
