@@ -9,6 +9,7 @@ import {
   createConfirmationToken,
   sameEmail,
   tokenMatches,
+  withdrawalCreationBlock,
 } from "../../modules/consumer-compliance/lib/withdrawal";
 import type { OrderAssessment } from "../../modules/consumer-compliance/lib/withdrawal";
 import { loadOrder, parseDisplayId } from "../lib/orders";
@@ -180,6 +181,29 @@ export const createWithdrawalStep = createStep(
     const deadlines = relevant.map((item) => item.deadline_at);
     const deadline = deadlines.includes(null) ? null : (deadlines as string[]).sort().at(-1) ?? null;
 
+    // Bound the requests per order before writing anything: the guest flow needs
+    // only the order number and its e-mail, and every request ends in an e-mail.
+    const existing = (await service.listWithdrawalRequests(
+      { order_id: order.id },
+      { select: ["status", "whole_order", "confirmation_expires_at"], take: null },
+    )) as unknown as { status: string; whole_order: boolean; confirmation_expires_at: Date | null }[];
+    const block = withdrawalCreationBlock(existing, new Date());
+    if (block === "already_withdrawn") {
+      throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "A withdrawal from this whole order was already submitted.", block);
+    }
+    if (block === "too_many_pending") {
+      throw new MedusaError(
+        MedusaError.Types.NOT_ALLOWED,
+        "There are already unconfirmed withdrawal requests for this order. Confirm one of them or try again later.",
+        block,
+      );
+    }
+
+    // The acknowledgement goes to the e-mail on the order, never to an address
+    // typed into the form: a guest has already proven that address to get here,
+    // and accepting any other one turned the form into an open mail relay.
+    const recipient = (order.email ?? input.email).trim();
+
     const { token, hash } = createConfirmationToken();
     const created = (await service.createWithdrawalRequests({
       assessment: assessment as unknown as Record<string, unknown>,
@@ -188,7 +212,7 @@ export const createWithdrawalStep = createStep(
       customer_id: order.customer_id,
       customer_name: input.customer_name.trim(),
       deadline_at: deadline ? new Date(deadline) : null,
-      email: input.email.trim(),
+      email: recipient,
       items: selected as unknown as Record<string, unknown>,
       locale: input.locale ?? null,
       order_display_id: order.display_id,

@@ -10,6 +10,16 @@ import { cartConsents } from "../lib/cart";
 import { isExternalMarketplaceOrder } from "../../modules/consumer-compliance/lib/external";
 import { hashLinkedDocument } from "../lib/link-hash";
 
+/** Hard ceiling on consent records per cart; a real checkout writes a handful. */
+const MAX_ACCEPTANCES_PER_CART = 200;
+
+interface Fingerprinted {
+  key: string;
+  version: number;
+  locale: string | null;
+  covered_product_ids: string[] | null;
+}
+
 type Row = Record<string, unknown> & { id: string };
 
 function service(container: { resolve<T>(key: string): T }): ConsumerComplianceModuleService {
@@ -167,7 +177,18 @@ export const recordConsentAcceptancesStep = createStep(
     }
     const byKey = new Map(applicable.map((entry) => [entry.definition.key, entry]));
     const defaultLocale = svc.resolvedOptions.defaultLocale;
-    const rows = input.acceptances.map((acceptance) => {
+    // A cart id is all it takes to call this, so the writes per cart are bounded:
+    // repeats inside one request and acceptances already on record (same key,
+    // version, locale and covered products) are not written again, and a cart
+    // has a hard ceiling.
+    const recorded = (await svc.listConsentAcceptances(
+      { cart_id: cart.id },
+      { select: ["key", "version", "locale", "covered_product_ids"], take: null },
+    )) as unknown as Fingerprinted[];
+    if (recorded.length >= MAX_ACCEPTANCES_PER_CART) {
+      throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "Too many consent records on this cart.");
+    }
+    const validated = input.acceptances.map((acceptance) => {
       const entry = byKey.get(acceptance.key);
       if (!entry) {
         throw new MedusaError(MedusaError.Types.INVALID_DATA, `Consent ${acceptance.key} does not apply to this cart.`);
@@ -196,6 +217,17 @@ export const recordConsentAcceptancesStep = createStep(
         user_agent: input.user_agent,
         version: entry.definition.version,
       };
+    });
+    const fingerprint = (row: Fingerprinted) =>
+      [row.key, Number(row.version), row.locale ?? "", [...(row.covered_product_ids ?? [])].sort().join(",")].join("\u0000");
+    const seen = new Set(recorded.map(fingerprint));
+    const rows = validated.filter((row) => {
+      const id = fingerprint(row);
+      if (seen.has(id)) {
+        return false;
+      }
+      seen.add(id);
+      return true;
     });
     const created = rows.length > 0 ? ((await svc.createConsentAcceptances(rows as never)) as unknown as Row[]) : [];
     return new StepResponse(
