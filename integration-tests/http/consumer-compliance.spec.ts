@@ -53,7 +53,6 @@ async function seed(container: MedusaContainer) {
 medusaIntegrationTestRunner({
   cwd: join(__dirname, "../app"),
   dbName: process.env.DB_HTTP_TEMP_NAME ?? "cc_http_integration",
-  inApp: true,
   testSuite: ({ api, getContainer }) => {
     describe("consumer compliance over HTTP", () => {
       it("records prices, answers Omnibus and unit prices, and runs the withdrawal flow", async () => {

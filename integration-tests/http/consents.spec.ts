@@ -86,7 +86,6 @@ const failed = (error: { response: { status: number; data: Record<string, unknow
 medusaIntegrationTestRunner({
   cwd: join(__dirname, "../app"),
   dbName: process.env.DB_HTTP_CONSENTS_TEMP_NAME ?? "cc_http_consents_integration",
-  inApp: true,
   testSuite: ({ api, getContainer }) => {
     describe("checkout consents", () => {
       it("matches, enforces, snapshots immutably, and drives the withdrawal lookup", async () => {
