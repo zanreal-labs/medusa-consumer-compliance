@@ -61,7 +61,6 @@ async function seed(container: MedusaContainer) {
 medusaIntegrationTestRunner({
   cwd: join(__dirname, "../app"),
   dbName: process.env.DB_HTTP_DIGITAL_TEMP_NAME ?? "cc_http_digital_integration",
-  inApp: true,
   testSuite: ({ api, getContainer }) => {
     describe("digital-only store", () => {
       it("answers 'no right of withdrawal' with consent, and keeps the 14-day right without it", async () => {

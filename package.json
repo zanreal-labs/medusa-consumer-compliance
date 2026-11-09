@@ -101,7 +101,7 @@
     "react-i18next": "^13.5.0"
   },
   "engines": {
-    "node": ">=22.13"
+    "node": ">=22.22.0"
   },
   "packageManager": "pnpm@11.13.1"
 }
