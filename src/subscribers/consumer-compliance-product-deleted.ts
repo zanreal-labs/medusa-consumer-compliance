@@ -1,8 +1,8 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { CONSUMER_COMPLIANCE_MODULE } from "../modules/consumer-compliance";
 import type ConsumerComplianceModuleService from "../modules/consumer-compliance/service";
-import { readIds } from "./lib/events";
-import { failSafe } from "./lib/fail-safe";
+import { readIds } from "../lib/events";
+import { failSafe } from "../lib/fail-safe";
 
 /**
  * Drop the per-product and per-variant data of a deleted product. Soft

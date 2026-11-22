@@ -5,7 +5,7 @@ import { isExternalMarketplaceOrder } from "../modules/consumer-compliance/lib/e
 import type ConsumerComplianceModuleService from "../modules/consumer-compliance/service";
 import type { QueryGraph } from "../workflows/lib/catalog";
 import { snapshotOrderConsentsWorkflow } from "../workflows/consents";
-import { failSafe } from "./lib/fail-safe";
+import { failSafe } from "../lib/fail-safe";
 
 /**
  * When a cart becomes an order, freeze its accepted consents onto the order.
