@@ -50,6 +50,14 @@ reaches npm only through a GitHub Release.
 
 ### Changed
 
+- Built and tested against **Medusa 2.23.0**: the `@medusajs/*` peers pin 2.23.0
+  (`@medusajs/ui` 4.3.0), the admin is built with React 19 and Vite 8, and the
+  `react-i18next` peer is `^18.0.1`, the major the 2.23.0 dashboard ships.
+- The subscriber helpers (`coalescing-queue`, `events`, `fail-safe`) live in
+  `src/lib/` instead of `src/subscribers/lib/`: Medusa loads every file under
+  `subscribers/` as a subscriber, which the Medusa 2.23 lint rules reject.
+- Dependency updates come from Renovate, run weekly by the `zanek-ai` app from
+  `.github/workflows/renovate.yml`, instead of Dependabot.
 - The storefront guide was replaced by a framework-agnostic frontend API contract.
 
 ### Documentation

@@ -3,10 +3,10 @@ import type { Logger, MedusaContainer } from "@medusajs/framework/types";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { listVariantIdsByPriceIds, listVariantIdsByProductIds } from "../workflows/lib/catalog";
 import { recordPriceHistoryWorkflow } from "../workflows/record-price-history";
-import { createCoalescingQueue } from "./lib/coalescing-queue";
-import type { CoalescingQueue } from "./lib/coalescing-queue";
-import { PRICE_HISTORY_EVENTS, parsePriceEvent } from "./lib/events";
-import { failSafe } from "./lib/fail-safe";
+import { createCoalescingQueue } from "../lib/coalescing-queue";
+import type { CoalescingQueue } from "../lib/coalescing-queue";
+import { PRICE_HISTORY_EVENTS, parsePriceEvent } from "../lib/events";
+import { failSafe } from "../lib/fail-safe";
 
 /**
  * Record a price change for the Omnibus history within seconds of it
