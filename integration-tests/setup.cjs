@@ -5,6 +5,7 @@
  * sources, decorators included.
  */
 require("ts-node").register({
+  compiler: "@typescript/typescript6",
   compilerOptions: { module: "commonjs" },
   swc: true,
   transpileOnly: true,
