@@ -6,3 +6,5 @@ allowBuilds:
   esbuild: true
   msgpackr-extract: true
   protobufjs: true
+# typescript-eslint needs the TypeScript 6 JS API, which TypeScript 7 does not ship,
+# so its typescript peer must not resolve to the root typescript 7.

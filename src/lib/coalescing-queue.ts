@@ -29,7 +29,7 @@ export interface CoalescingQueue {
 
 export function createCoalescingQueue(options: CoalescingQueueOptions): CoalescingQueue {
   const {
-    clearTimer = clearTimeout,
+    clearTimer = clearTimeout as (handle: unknown) => void,
     flush,
     maxWaitMs = 30_000,
     now = Date.now,
